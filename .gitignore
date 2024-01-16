@@ -1,0 +1,13 @@
+# directories
+.tmp/
+.vscode/
+vendor/
+db/
+
+# ignore backup files
+*~
+
+# ignore configuration
+.env
+phpunit.xml
+.phpunit.result.cache
