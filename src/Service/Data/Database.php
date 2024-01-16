@@ -6,10 +6,13 @@ use PDOException;
 class Database
 {
     private $dbh;
+    private $lastInsertId;
+    private $lastError;
 
     public function __construct()
     {
-
+        $this->lastInsertId = -1;
+        $this->lastError = [];
     }
 
     public function connect(string $host, string $username, ?string $password, string $database)
@@ -32,7 +35,19 @@ class Database
     {
         $sth = $this->dbh->prepare($query);
         $sth->execute($parameters);
+        $this->lastInsertId = $this->dbh->lastInsertId();
+        $this->lastError = $sth->errorInfo();
         return $sth;
+    }
+
+    public function lastInsertId()
+    {
+        return $this->lastInsertId;
+    }
+
+    public function lastError()
+    {
+        return $this->lastError;
     }
 
 }

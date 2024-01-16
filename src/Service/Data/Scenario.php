@@ -31,6 +31,27 @@ class Scenario
         return $this->log;
     }
 
+    public function clone(int $oldScenarioId, string $newScenarioName, string $newScenarioDescr, int $newAccountType)
+    {
+        // Create new scenario
+        $sql = "INSERT INTO scenario (scenario_name, scenario_descr, account_type_id) VALUES (:newScenarioName, :newScenarioDescr, :newAccountType)";
+        $sth = $this->data->exec($sql, ['newScenarioName' => $newScenarioName, 'newScenarioDescr' => $newScenarioDescr, 'newAccountType' => $newAccountType]);
+        $error = $this->data->lastError();
+
+        // Fetch new scenario ID
+        $newScenarioId = $this->data->lastInsertId();
+
+        // Clone scenario
+        $sql = "
+            INSERT INTO expense (scenario_id, expense_name, expense_descr, amount, inflation_rate, begin_year, begin_month, end_year, end_month, repeat_every)
+            SELECT :newScenarioId, expense_name, expense_descr, amount, inflation_rate, begin_year, begin_month, end_year, end_month, repeat_every
+            FROM expense
+            WHERE scenario_id = :oldScenarioId
+        ";
+        $sth = $this->data->exec($sql, ['oldScenarioId' => $oldScenarioId, 'newScenarioId' => $newScenarioId]);
+        $error = $this->data->lastError();
+    }
+
     protected function getRowsForScenario(string $scenarioName, string $scenarioType, string $sql): array
     {
         // Get the data
