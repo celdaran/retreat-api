@@ -157,7 +157,7 @@ class IncomeCollection extends Scenario
      */
     private function fetchQuery(): string
     {
-        return file_get_contents(__DIR__ . '/../../../db/income-query.sql');
+        return file_get_contents(__DIR__ . '/../../../sql/income-query.sql');
     }
 
     /**

@@ -212,7 +212,7 @@ class AssetCollection extends Scenario
 
     private function fetchQuery(): string
     {
-        return file_get_contents(__DIR__ . '/../../../db/asset-query.sql');
+        return file_get_contents(__DIR__ . '/../../../sql/asset-query.sql');
     }
 
     private function transform(array $rows): array
