@@ -40,7 +40,9 @@ class Log
     private function _log(int $level, string $message)
     {
         if ($this->level >= $level) {
-            print(date('c') . ' ' . $this->levels[$level] . ': ' . $message . "\n");
+            // TODO: figure out how to log in a RESTful world
+            // Disabling for now
+            //print(date('c') . ' ' . $this->levels[$level] . ': ' . $message . "\n");
         }
     }
 
