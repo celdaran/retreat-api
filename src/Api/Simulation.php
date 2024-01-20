@@ -1,14 +1,12 @@
-<?php
+<?php namespace App\Api;
 
-namespace App\Api;
-
-use App\Service\Engine;
+use App\Service\Engine\Engine;
 
 class Simulation
 {
-    // GET https://www.technitivity.com/retreat/api/simulation
+    // GET https://www.technitivity.com/retreat/api/simulation/summary
     /**
-     * @url GET /simulation
+     * @url POST /summary
      * @param string $expense
      * @param string $asset
      * @param string $income
@@ -20,7 +18,7 @@ class Simulation
      *
      * @return array
      */
-    public function getTable(
+    public function summary(
         string $expense,
         string $asset,
         string $income,
@@ -29,6 +27,7 @@ class Simulation
         string $startYear,
         string $startMonth
     ) {
+
         $engine = new Engine(
             $expense,
             $asset,
@@ -44,6 +43,19 @@ class Simulation
             ];
         }
 
+        $payload = [];
+
+        $plan = $engine->getPlan();
+        foreach ($plan as $period) {
+            $payload[] = [
+                "x" => sprintf("%04d-%02d", $period["year"], $period["month"]),
+                "y" => $period["net_expense"]->value(),
+            ];
+        }
+
+        return $payload;
+
+        /*
         return [
             [
                 "x" => "2026-01",
@@ -57,31 +69,8 @@ class Simulation
                 "x" => "2026-03",
                 "y" => 30000
             ],
-            [
-                "x" => "2026-04",
-                "y" => 30000
-            ],
-            [
-                "x" => "2026-05",
-                "y" => 29000
-            ],
-            [
-                "x" => "2026-06",
-                "y" => 28000
-            ],
-            [
-                "x" => "2026-07",
-                "y" => 27500
-            ],
-            [
-                "x" => "2026-08",
-                "y" => 26000
-            ],
-            [
-                "x" => "2026-09",
-                "y" => 21000
-            ]
         ];
+        */
     }
 
 
