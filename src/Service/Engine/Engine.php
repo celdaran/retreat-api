@@ -74,17 +74,11 @@ class Engine
         $this->assetCollection->loadScenario($this->assetScenarioName);
         $this->incomeCollection->loadScenario($this->incomeScenarioName);
 
-        // Adjust in-memory scenarios based on requested start period
-        // TODO: make this optional
-        /*
-        $this->adjustScenario($this->expense, $startYear, $startMonth);
-        $this->adjustScenario($this->asset, $startYear, $startMonth);
-        */
-
         // Track period (year and month)
         $this->currentPeriod = $this->expenseCollection->getStart($startYear, $startMonth);
 
         // Log it to STDOUT (for now)
+        /*
         printf("Simulation parameters:\n");
         printf("  Expense scenario: %s\n", $this->expenseScenarioName);
         printf("  Asset scenario: %s\n", $this->assetScenarioName);
@@ -93,6 +87,7 @@ class Engine
         printf("  Duration: %d\n", $periods);
         printf("  Start Year: %d\n", $this->currentPeriod->getYear());
         printf("  Start Month: %d\n", $this->currentPeriod->getMonth());
+        */
 
         // Loop until the requested number of months have passed.
         while ($periods > 0) {
@@ -138,21 +133,22 @@ class Engine
 
     public function render($format = 'csv') : array
     {
+        $payload = [];
         switch ($format) {
-            case 'csv': 
-                printf('%s,%s,%s,,', 'period', 'month', 'expense');
+            case 'csv':
+                $payload[] = sprintf('%s,%s,%s,,', 'period', 'month', 'expense');
                 $i = 0;
                 foreach ($this->plan as $p) {
                     // Header
                     if ($i === 0) {
-                        $this->renderHeader($p);
+                        $payload[] = $this->renderHeader($p);
                     }
         
                     // Body
                     $this->renderLine($p);
                     $i++;
                 }
-            return [];
+            return $payload;
 
             case 'json':
                 $payload = [];
@@ -161,61 +157,68 @@ class Engine
         }
     }
 
-    public function renderHeader(array $p)
+    public function renderHeader(array $p): string
     {
+        $payload = '';
         if (count($p['income']) > 0) {
             foreach (array_keys($p['income']) as $incomeName) {
-                printf('"%s",', addslashes($incomeName));
+                $payload .= sprintf('"%s",', addslashes($incomeName));
             }
         }
-        printf('"total income",');
-        printf('"net expense",,');
+        $payload .= sprintf('"total income",');
+        $paylaod .= sprintf('"net expense",,');
         if (count($p['assets']) > 0) {
             foreach (array_keys($p['assets']) as $assetName) {
-                printf('"%s",', addslashes($assetName));
+                $payload .= sprintf('"%s",', addslashes($assetName));
             }
         }
-        printf('"total assets"' . "\n");
+        $payload .= sprintf('"total assets"' . "\n");
+        return $payload;
     }
 
-    public function renderLine(array $p)
+    public function renderLine(array $p): string
     {
+        $payload = '';
         $totalIncome = 0.00;
         $totalAssets = 0.00;
-        printf('%03d,%4d-%02d,%.2f,,', $p['period'], $p['year'], $p['month'], $p['expense']->value());
+        $payload .= sprintf('%03d,%4d-%02d,%.2f,,', $p['period'], $p['year'], $p['month'], $p['expense']->value());
         foreach ($p['income'] as $income) {
-            printf('%.2f,', $income);
+            $payload .= sprintf('%.2f,', $income);
             $totalIncome += $income;
         }
-        printf('%.2f,', $totalIncome);
-        printf('%.2f,,', $p['net_expense']->value());
+        $payload .= sprintf('%.2f,', $totalIncome);
+        $payload .= sprintf('%.2f,,', $p['net_expense']->value());
         foreach ($p['assets'] as $asset) {
-            printf('%.2f,', $asset);
+            $payload .= sprintf('%.2f,', $asset);
             $totalAssets += $asset;
         }
-        printf($totalAssets . "\n");
+        $payload .= sprintf($totalAssets . "\n");
     }
 
-    public function report()
+    public function report(): string
     {
+        $payload = '';
         $total = new Money();
 
         /** @var Asset $asset */
         foreach ($this->assetCollection->getAssets() as $asset) {
             $total->add($asset->currentBalance()->value());
-            printf("Asset: %s\n", $asset->name());
-            printf("  Current balance: %s\n", $asset->currentBalance()->formatted());
-            printf("\n");
+            $payload .= sprintf("Asset: %s\n", $asset->name());
+            $payload .= sprintf("  Current balance: %s\n", $asset->currentBalance()->formatted());
+            $payload .= sprintf("\n");
         }
 
-        printf("Total assets: %s\n", $total->formatted());
+        $payload .= printf("Total assets: %s\n", $total->formatted());
+        return $payload;
     }
 
-    public function audit()
+    public function audit(): string
     {
+        $payload = '';
+
         foreach ($this->audit['expense'] as $thing) {
             foreach ($thing as $e) {
-                printf('%03d,%4d-%02d,"%s",%0.2f,%s' . "\n",
+                $payload .= sprintf('%03d,%4d-%02d,"%s",%0.2f,%s' . "\n",
                     $e['period'], $e['year'], $e['month'],
                     $e['name'], $e['amount'], $e['status'],
                 );
@@ -224,7 +227,7 @@ class Engine
 
         foreach ($this->audit['asset'] as $thing) {
             foreach ($thing as $a) {
-                printf('%03d,%4d-%02d,"%s",%0.2f,%0.2f,%0.2f,%s' . "\n",
+                $payload .= sprintf('%03d,%4d-%02d,"%s",%0.2f,%0.2f,%0.2f,%s' . "\n",
                     $a['period'], $a['year'], $a['month'],
                     $a['name'], $a['opening_balance'], $a['current_balance'], $a['max_withdrawal'], $a['status']);
             }
@@ -232,11 +235,13 @@ class Engine
 
         foreach ($this->audit['income'] as $thing) {
             foreach ($thing as $i) {
-                printf('%03d,%4d-%02d,"%s",%0.2f,%s' . "\n",
+                $payload .= sprintf('%03d,%4d-%02d,"%s",%0.2f,%s' . "\n",
                     $i['period'], $i['year'], $i['month'],
                     $i['name'], $i['amount'], $i['status']);
             }
         }
+
+        return $payload;
     }
 
     //------------------------------------------------------------------
