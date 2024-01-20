@@ -4,7 +4,6 @@ use App\Service\Engine\Engine;
 
 class Simulation
 {
-    // GET https://www.technitivity.com/retreat/api/simulation/summary
     /**
      * @url POST /summary
      * @param string $expense
