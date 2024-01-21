@@ -5,7 +5,8 @@ SELECT
   SUBSTRING_INDEX(group_concat(i.begin_year ORDER BY i.income_id), ',', -1) AS begin_year,
   SUBSTRING_INDEX(group_concat(i.begin_month ORDER BY i.income_id), ',', -1) AS begin_month,
   SUBSTRING_INDEX(group_concat(i.end_year ORDER BY i.income_id), ',', -1) AS end_year,
-  SUBSTRING_INDEX(group_concat(i.end_month ORDER BY i.income_id), ',', -1) AS end_month
+  SUBSTRING_INDEX(group_concat(i.end_month ORDER BY i.income_id), ',', -1) AS end_month,
+  SUBSTRING_INDEX(group_concat(e.repeat_every ORDER BY e.expense_id), ',', -1) AS repeat_every
 FROM (
   SELECT
     i.*
