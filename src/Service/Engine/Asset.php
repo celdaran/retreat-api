@@ -155,12 +155,12 @@ class Asset {
         return $this->beginAfter;
     }
 
-    public function beginYear(): int
+    public function beginYear(): ?int
     {
         return $this->beginYear;
     }
 
-    public function beginMonth(): int
+    public function beginMonth(): ?int
     {
         return $this->beginMonth;
     }
