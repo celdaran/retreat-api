@@ -40,8 +40,7 @@ class Engine
         $this->expenseScenarioName = $expenseScenarioName;
         $this->assetScenarioName = ($assetScenarioName === null) ? $expenseScenarioName : $assetScenarioName;
         $this->incomeScenarioName = ($incomeScenarioName === null) ? $expenseScenarioName : $incomeScenarioName;
-        $this->taxRate = ($taxRate === 0.00) ? $_ENV['TAX_RATE'] : $taxRate;
-        $this->taxRate = ($this->taxRate === null) ? 0.18 : $this->taxRate;
+        $this->taxRate = ($taxRate === null) ? $_ENV['TAX_RATE'] : $taxRate;
 
         // Instantiate main classes
         $this->expenseCollection = new ExpenseCollection();
