@@ -5,12 +5,13 @@ use PDOException;
 
 class Database
 {
-    private $dbh;
-    private $lastInsertId;
-    private $lastError;
+    private ?PDO $dbh;
+    private string $lastInsertId;
+    private array $lastError;
 
     public function __construct()
     {
+        $this->dbh = null;
         $this->lastInsertId = -1;
         $this->lastError = [];
     }
@@ -18,7 +19,9 @@ class Database
     public function connect(string $host, string $username, ?string $password, string $database)
     {
         try {
-            $this->dbh = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+            if ($this->dbh === null) {
+                $this->dbh = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+            }
         } catch (PDOException $e) {
             print "Error connecting to database: " . $e->getMessage() . "\n";
             die();
