@@ -2,7 +2,6 @@
 .tmp/
 .vscode/
 vendor/
-db/
 
 # ignore backup files
 *~
