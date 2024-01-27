@@ -42,7 +42,7 @@ class Log
         if ($this->level >= $level) {
             // TODO: figure out how to log in a RESTful world
             // Disabling for now
-            //print(date('c') . ' ' . $this->levels[$level] . ': ' . $message . "\n");
+            print(date('c') . ' ' . $this->levels[$level] . ': ' . $message . "\n");
         }
     }
 
