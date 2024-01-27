@@ -10,7 +10,6 @@ class Engine
     private string $expenseScenarioName;
     private string $assetScenarioName;
     private string $incomeScenarioName;
-    private float $taxRate;
 
     private ExpenseCollection $expenseCollection;
     private AssetCollection $assetCollection;
@@ -33,14 +32,12 @@ class Engine
     public function __construct(
         string $expenseScenarioName = 'base',
         string $assetScenarioName = null,
-        string $incomeScenarioName = null,
-        float $taxRate = null)
+        string $incomeScenarioName = null)
     {
         // Get scenario names
         $this->expenseScenarioName = $expenseScenarioName;
         $this->assetScenarioName = ($assetScenarioName === null) ? $expenseScenarioName : $assetScenarioName;
         $this->incomeScenarioName = ($incomeScenarioName === null) ? $expenseScenarioName : $incomeScenarioName;
-        $this->taxRate = ($taxRate === null) ? $_ENV['TAX_RATE'] : $taxRate;
 
         // Instantiate main classes
         $this->expenseCollection = new ExpenseCollection();
@@ -80,7 +77,6 @@ class Engine
         $this->log->debug(sprintf("  Expense scenario: %s", $this->expenseScenarioName));
         $this->log->debug(sprintf("  Asset scenario: %s", $this->assetScenarioName));
         $this->log->debug(sprintf("  Income scenario: %s", $this->incomeScenarioName));
-        $this->log->debug(sprintf("  Income Tax Rate: %.3f", $this->taxRate));
         $this->log->debug(sprintf("  Duration: %d", $periods));
         $this->log->debug(sprintf("  Start Year: %d", $this->currentPeriod->getYear()));
         $this->log->debug(sprintf("  Start Month: %d", $this->currentPeriod->getMonth()));
@@ -284,9 +280,15 @@ class Engine
         // If we're in the fourth period, calculate taxes
         // Note: this has issues. But it's good enough
         if ($this->currentPeriod->getCurrentPeriod() % 12 === 4) {
-            $taxAmount = $this->annualIncome->value() * $this->taxRate;
+            $taxAmount = Util::calculateIncomeTax($this->annualIncome->value(), $this->currentPeriod->getYear());
             $expense->add($taxAmount);
-            $this->log->debug("Paying income tax of $taxAmount in period {$this->currentPeriod->getCurrentPeriod()}");
+            $effectiveTaxRate = ($taxAmount / $this->annualIncome->value()) * 100;
+            $msg = sprintf("Paying income tax of %0.2f in period %d (effective tax rate: %0.1f%%)",
+                $taxAmount,
+                $this->currentPeriod->getCurrentPeriod(),
+                $effectiveTaxRate
+            );
+            $this->log->debug($msg);
             $this->annualIncome->assign(0.00);
         }
 

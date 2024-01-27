@@ -15,7 +15,6 @@ class Simulation
      * @param string $expense
      * @param string $asset
      * @param string $income
-     * @param string $tax
      *
      * @param string $periods
      * @param string $startYear
@@ -27,7 +26,6 @@ class Simulation
         string $expense,
         string $asset,
         string $income,
-        string $tax,
         string $periods,
         string $startYear,
         string $startMonth
@@ -35,7 +33,7 @@ class Simulation
         $payload = [];
 
         try {
-            $plan = $this->getPlan($expense, $asset, $income, $tax, $periods, $startYear, $startMonth);
+            $plan = $this->getPlan($expense, $asset, $income, $periods, $startYear, $startMonth);
             foreach ($plan as $period) {
                 $payload[] = [
                     "x" => sprintf("%04d-%02d", $period["year"], $period["month"]),
@@ -60,7 +58,6 @@ class Simulation
      * @param string $expense
      * @param string $asset
      * @param string $income
-     * @param string $tax
      *
      * @param string $periods
      * @param string $startYear
@@ -72,7 +69,6 @@ class Simulation
         string $expense,
         string $asset,
         string $income,
-        string $tax,
         string $periods,
         string $startYear,
         string $startMonth
@@ -119,7 +115,7 @@ class Simulation
             $assetList = [];
             $first = true;
     
-            $plan = $this->getPlan($expense, $asset, $income, $tax, $periods, $startYear, $startMonth);
+            $plan = $this->getPlan($expense, $asset, $income, $periods, $startYear, $startMonth);
             foreach ($plan as $period) {
 
                 $entry = [
@@ -172,7 +168,6 @@ class Simulation
      * @param string $expense
      * @param string $asset
      * @param string $income
-     * @param string $tax
      *
      * @param string $periods
      * @param string $startYear
@@ -185,7 +180,6 @@ class Simulation
         string $expense,
         string $asset,
         string $income,
-        string $tax,
         string $periods,
         string $startYear,
         string $startMonth
@@ -194,8 +188,7 @@ class Simulation
         $engine = new Engine(
             $expense,
             $asset,
-            $income,
-            $tax,
+            $income
         );
 
         $success = $engine->run($periods, $startYear, $startMonth);

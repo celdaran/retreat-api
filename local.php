@@ -11,7 +11,6 @@ $results = $api->assetDepletion(
     'UNIT TEST 01',
     'UNIT TEST 01',
     'Default',
-    0.25,
     12,
     2025,
     1,
