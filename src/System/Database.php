@@ -1,4 +1,4 @@
-<?php namespace App\Service\Data;
+<?php namespace App\System;
 
 use PDO;
 use PDOException;
@@ -8,12 +8,14 @@ class Database
     private ?PDO $dbh;
     private string $lastInsertId;
     private array $lastError;
+    private Log $log;
 
-    public function __construct()
+    public function __construct(Log $log)
     {
         $this->dbh = null;
         $this->lastInsertId = -1;
         $this->lastError = [];
+        $this->log = $log;
     }
 
     public function connect(string $host, string $username, ?string $password, string $database)
@@ -23,8 +25,7 @@ class Database
                 $this->dbh = new PDO("mysql:host=$host;dbname=$database", $username, $password);
             }
         } catch (PDOException $e) {
-            print "Error connecting to database: " . $e->getMessage() . "\n";
-            die();
+            $this->log->error("Error connecting to database: " . $e->getMessage() . "\n");
         }
     }
 

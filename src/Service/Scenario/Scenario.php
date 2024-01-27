@@ -1,19 +1,19 @@
-<?php namespace App\Service\Data;
+<?php namespace App\Service\Scenario;
 
-use App\Service\Log;
+use App\System\Log;
+use App\System\Database;
 
 class Scenario
 {
     private Database $data;
     private Log $log;
 
-    public function __construct()
+    public function __construct(Log $log)
     {
-        $this->log = new Log();
-        $this->log->setLevel($_ENV['LOG_LEVEL']);
+        $this->log = $log;
 
         try {
-            $this->data = new Database();
+            $this->data = new Database($this->log);
             $this->data->connect($_ENV['DBHOST'], $_ENV['DBUSER'], $_ENV['DBPASS'], $_ENV['DBNAME']);
         } catch (\Exception $e) {
             $this->log->warn($e->getMessage());

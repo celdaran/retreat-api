@@ -1,4 +1,4 @@
-<?php namespace App\Service\Data;
+<?php namespace App\Service\Scenario;
 
 use App\Service\Engine\Income;
 use App\Service\Engine\Money;

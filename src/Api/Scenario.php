@@ -1,6 +1,7 @@
 <?php namespace App\Api;
 
-use App\Service\Data\Scenario as DataScenario;
+use App\System\LogFactory;
+use App\Service\Scenario\Scenario as DataScenario;
 
 class Scenario
 {
@@ -13,7 +14,8 @@ class Scenario
      */
     public function clone(string $newScenarioName, string $newScenarioDescr, string $oldScenarioId): array
     {
-        $scenario = new DataScenario();
+        $log = LogFactory::getLogger();
+        $scenario = new DataScenario($log);
         $scenario->clone($oldScenarioId, $newScenarioName, $newScenarioDescr, 1);
         return ['msg' => 'Probably succeeded. IDK'];
     }

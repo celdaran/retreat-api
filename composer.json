@@ -15,7 +15,8 @@
     "autoload": {
         "psr-4": {
             "App\\Api\\": "src/Api/",
-            "App\\Service\\": "src/Service/"
+            "App\\Service\\": "src/Service/",
+            "App\\System\\": "src/System/"
         }
     },
     "prefer-stable": true

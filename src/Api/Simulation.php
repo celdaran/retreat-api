@@ -34,7 +34,7 @@ class Simulation
 
         try {
             $plan = $this->getPlan($expense, $asset, $income, $periods, $startYear, $startMonth);
-            foreach ($plan as $period) {
+            foreach ($plan['simulation'] as $period) {
                 $payload[] = [
                     "x" => sprintf("%04d-%02d", $period["year"], $period["month"]),
                     "y" => $period["net_expense"]->value(),
@@ -72,7 +72,7 @@ class Simulation
         string $periods,
         string $startYear,
         string $startMonth
-    ) {
+    ): array {
 
         // Generate payload template
         $payload = [
@@ -109,14 +109,16 @@ class Simulation
             ],
             'series' => [],
         ];
+        $logs = [];
 
         // Fill in data source entries
         try {
             $assetList = [];
             $first = true;
-    
+
             $plan = $this->getPlan($expense, $asset, $income, $periods, $startYear, $startMonth);
-            foreach ($plan as $period) {
+            $logs = $plan['logs'];
+            foreach ($plan['simulation'] as $period) {
 
                 $entry = [
                     sprintf("%04d-%02d", $period["year"], $period["month"]),
@@ -155,7 +157,10 @@ class Simulation
             ];
         }
 
-        return $payload;
+        return [
+            'simulation' => $payload,
+            'logs' => $logs,
+        ];
 
     }
 
@@ -197,7 +202,13 @@ class Simulation
             throw new Exception("Error running simulation");
         }
 
-        return $engine->getPlan();
+        $simulation = $engine->getPlan();
+        $logs = $engine->getLogs();
+
+        return [
+            'simulation' => $simulation,
+            'logs' => $logs,
+        ];
     }
 
 }

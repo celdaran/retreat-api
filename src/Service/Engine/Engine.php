@@ -1,9 +1,10 @@
 <?php namespace App\Service\Engine;
 
-use App\Service\Data\ExpenseCollection;
-use App\Service\Data\AssetCollection;
-use App\Service\Data\IncomeCollection;
-use App\Service\Log;
+use App\System\Log;
+use App\System\LogFactory;
+use App\Service\Scenario\ExpenseCollection;
+use App\Service\Scenario\AssetCollection;
+use App\Service\Scenario\IncomeCollection;
 
 class Engine
 {
@@ -34,21 +35,21 @@ class Engine
         string $assetScenarioName = null,
         string $incomeScenarioName = null)
     {
+        // Instantiate global logger
+        $this->log = LogFactory::getLogger();
+
         // Get scenario names
         $this->expenseScenarioName = $expenseScenarioName;
         $this->assetScenarioName = ($assetScenarioName === null) ? $expenseScenarioName : $assetScenarioName;
         $this->incomeScenarioName = ($incomeScenarioName === null) ? $expenseScenarioName : $incomeScenarioName;
 
         // Instantiate main classes
-        $this->expenseCollection = new ExpenseCollection();
-        $this->assetCollection = new AssetCollection();
-        $this->incomeCollection = new IncomeCollection();
+        $this->expenseCollection = new ExpenseCollection($this->log);
+        $this->assetCollection = new AssetCollection($this->log);
+        $this->incomeCollection = new IncomeCollection($this->log);
 
         $this->plan = [];
         $this->audit = [];
-
-        $this->log = new Log();
-        $this->log->setLevel($_ENV['LOG_LEVEL']);
 
         $this->annualIncome = new Money();
 
@@ -121,6 +122,11 @@ class Engine
     public function getPlan(): array
     {
         return $this->plan;
+    }
+
+    public function getLogs(): array
+    {
+        return $this->log->getLogs();
     }
 
     public function render($format = 'csv') : array
