@@ -85,6 +85,12 @@ class Engine
         // Loop until the requested number of months have passed.
         while ($periods > 0) {
 
+            $this->log->debug(sprintf("-- PERIOD: %d (%04d-%02d) --------------------------------------------- ",
+                $this->currentPeriod->getCurrentPeriod(),
+                $this->currentPeriod->getYear(),
+                $this->currentPeriod->getMonth(),
+            ));
+
             $this->appendToAudit();
 
             // Start by tallying all expenses for period

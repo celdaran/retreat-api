@@ -125,12 +125,12 @@ class AssetCollection extends Scenario
         }
 
         if ($total->value() < $expense->value()) {
-            $msg = sprintf('Could not find enough money %s in %4d-%02d (period %d) to cover expense "%s"',
-                $total->formatted(),
+            $msg = sprintf('Insufficient funds in period %d (%4d-%02d); needed: %s vs found: %s',
+                $period->getCurrentPeriod(),
                 $period->getYear(),
                 $period->getMonth(),
-                $period->getCurrentPeriod(),
                 $expense->formatted(),
+                $total->formatted(),
             );
             $this->getLog()->warn($msg);
         }
