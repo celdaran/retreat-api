@@ -9,8 +9,6 @@ class Money {
 
     protected float $value;
 
-    private \NumberFormatter $fmt;
-
     //--------------------------------------------
     // Constructor
     //--------------------------------------------
@@ -18,7 +16,6 @@ class Money {
     public function __construct($value = 0.00)
     {
         $this->setValue($value);
-        $this->fmt = new \NumberFormatter('en_US', \NumberFormatter::CURRENCY);
     }
 
     //--------------------------------------------
@@ -85,7 +82,7 @@ class Money {
 
     public function formatted(): string
     {
-        return $this->fmt->formatCurrency($this->value, 'USD');
+        return sprintf("%01.2f", $this->value);
     }
 
 }
