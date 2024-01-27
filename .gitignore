@@ -1,6 +1,7 @@
-# directories
+# ignore development directories
 .tmp/
 .vscode/
+.idea/
 vendor/
 
 # ignore backup files
@@ -10,3 +11,8 @@ vendor/
 .env
 phpunit.xml
 .phpunit.result.cache
+
+# ignore containerization
+.dockerignore
+Dockerfile
+docker/
