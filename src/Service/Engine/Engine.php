@@ -76,17 +76,14 @@ class Engine
         // Track period (year and month)
         $this->currentPeriod = $this->expenseCollection->getStart($startYear, $startMonth);
 
-        // Log it to STDOUT (for now)
-        /*
-        printf("Simulation parameters:\n");
-        printf("  Expense scenario: %s\n", $this->expenseScenarioName);
-        printf("  Asset scenario: %s\n", $this->assetScenarioName);
-        printf("  Income scenario: %s\n", $this->incomeScenarioName);
-        printf("  Income Tax Rate: %.3f\n", $this->taxRate);
-        printf("  Duration: %d\n", $periods);
-        printf("  Start Year: %d\n", $this->currentPeriod->getYear());
-        printf("  Start Month: %d\n", $this->currentPeriod->getMonth());
-        */
+        $this->log->debug("Simulation parameters:");
+        $this->log->debug(sprintf("  Expense scenario: %s", $this->expenseScenarioName));
+        $this->log->debug(sprintf("  Asset scenario: %s", $this->assetScenarioName));
+        $this->log->debug(sprintf("  Income scenario: %s", $this->incomeScenarioName));
+        $this->log->debug(sprintf("  Income Tax Rate: %.3f", $this->taxRate));
+        $this->log->debug(sprintf("  Duration: %d", $periods));
+        $this->log->debug(sprintf("  Start Year: %d", $this->currentPeriod->getYear()));
+        $this->log->debug(sprintf("  Start Month: %d", $this->currentPeriod->getMonth()));
 
         // Loop until the requested number of months have passed.
         while ($periods > 0) {
