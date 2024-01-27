@@ -7,7 +7,7 @@ $dotenv->load();
 
 $api = new \App\Api\Simulation();
 
-$results = $api->summary(
+$results = $api->assetDepletion(
     'UNIT TEST 01',
     'UNIT TEST 01',
     'Default',
@@ -17,4 +17,5 @@ $results = $api->summary(
     1,
 );
 
-var_dump($results);
+print json_encode($results);
+
