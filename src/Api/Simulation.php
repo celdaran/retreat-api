@@ -14,7 +14,7 @@ class Simulation
      *
      * @param string $expense
      * @param string $asset
-     * @param string $income
+     * @param string $earnings
      *
      * @param string $periods
      * @param string $startYear
@@ -25,7 +25,7 @@ class Simulation
     public function summary(
         string $expense,
         string $asset,
-        string $income,
+        string $earnings,
         string $periods,
         string $startYear,
         string $startMonth
@@ -33,7 +33,7 @@ class Simulation
         $payload = [];
 
         try {
-            $plan = $this->getPlan($expense, $asset, $income, $periods, $startYear, $startMonth);
+            $plan = $this->getPlan($expense, $asset, $earnings, $periods, $startYear, $startMonth);
             foreach ($plan['simulation'] as $period) {
                 $payload[] = [
                     "x" => sprintf("%04d-%02d", $period["year"], $period["month"]),
@@ -57,7 +57,7 @@ class Simulation
      *
      * @param string $expense
      * @param string $asset
-     * @param string $income
+     * @param string $earnings
      *
      * @param string $periods
      * @param string $startYear
@@ -68,7 +68,7 @@ class Simulation
     public function assetDepletion(
         string $expense,
         string $asset,
-        string $income,
+        string $earnings,
         string $periods,
         string $startYear,
         string $startMonth
@@ -116,7 +116,7 @@ class Simulation
             $assetList = [];
             $first = true;
 
-            $plan = $this->getPlan($expense, $asset, $income, $periods, $startYear, $startMonth);
+            $plan = $this->getPlan($expense, $asset, $earnings, $periods, $startYear, $startMonth);
             $logs = $plan['logs'];
             foreach ($plan['simulation'] as $period) {
 
@@ -172,7 +172,7 @@ class Simulation
      *
      * @param string $expense
      * @param string $asset
-     * @param string $income
+     * @param string $earnings
      *
      * @param string $periods
      * @param string $startYear
@@ -184,7 +184,7 @@ class Simulation
     private function getPlan(
         string $expense,
         string $asset,
-        string $income,
+        string $earnings,
         string $periods,
         string $startYear,
         string $startMonth
@@ -193,7 +193,7 @@ class Simulation
         $engine = new Engine(
             $expense,
             $asset,
-            $income
+            $earnings
         );
 
         $success = $engine->run($periods, $startYear, $startMonth);

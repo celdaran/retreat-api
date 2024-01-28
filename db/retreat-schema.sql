@@ -46,11 +46,11 @@ CREATE TABLE `asset` (
   `modified_at` timestamp DEFAULT (now())
 );
 
-CREATE TABLE `income` (
-  `income_id` integer PRIMARY KEY NOT NULL AUTO_INCREMENT,
+CREATE TABLE `earnings` (
+  `earnings_id` integer PRIMARY KEY NOT NULL AUTO_INCREMENT,
   `scenario_id` integer NOT NULL,
-  `income_name` varchar(255) UNIQUE NOT NULL,
-  `income_descr` varchar(255),
+  `earnings_name` varchar(255) UNIQUE NOT NULL,
+  `earnings_descr` varchar(255),
   `amount` DECIMAL(13, 2) NOT NULL,
   `inflation_rate` DECIMAL(5, 3),
   `begin_year` integer,
@@ -68,8 +68,7 @@ CREATE TABLE `simulation` (
   `simulation_descr` varchar(255),
   `scenario_id__expense` integer NOT NULL,
   `scenario_id__asset` integer NOT NULL,
-  `scenario_id__income` integer NOT NULL,
-  `tax_rate` DECIMAL(5, 3),
+  `scenario_id__earnings` integer NOT NULL,
   `periods` integer,
   `start_year` integer,
   `start_month` integer,
@@ -87,10 +86,10 @@ ALTER TABLE `asset` ADD FOREIGN KEY (`scenario_id`) REFERENCES `scenario` (`scen
 
 ALTER TABLE `asset` ADD FOREIGN KEY (`begin_after`) REFERENCES `asset` (`asset_id`);
 
-ALTER TABLE `income` ADD FOREIGN KEY (`scenario_id`) REFERENCES `scenario` (`scenario_id`);
+ALTER TABLE `earnings` ADD FOREIGN KEY (`scenario_id`) REFERENCES `scenario` (`scenario_id`);
 
 ALTER TABLE `simulation` ADD FOREIGN KEY (`scenario_id__expense`) REFERENCES `scenario` (`scenario_id`);
 
 ALTER TABLE `simulation` ADD FOREIGN KEY (`scenario_id__asset`) REFERENCES `scenario` (`scenario_id`);
 
-ALTER TABLE `simulation` ADD FOREIGN KEY (`scenario_id__income`) REFERENCES `scenario` (`scenario_id`);
+ALTER TABLE `simulation` ADD FOREIGN KEY (`scenario_id__earnings`) REFERENCES `scenario` (`scenario_id`);

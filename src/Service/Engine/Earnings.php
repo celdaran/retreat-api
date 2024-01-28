@@ -1,9 +1,9 @@
 <?php namespace App\Service\Engine;
 
 /**
- * A class representing a source of income
+ * A class representing a source of earnings
  */
-class Income {
+class Earnings {
 
     const PLANNED = 0;
     const ACTIVE = 1;
@@ -27,73 +27,73 @@ class Income {
     // Setters
     //--------------------------------------------
 
-    public function setName(string $name): Income
+    public function setName(string $name): Earnings
     {
         $this->name = $name;
         return $this;
     }
 
-    public function setAmount(Money $amount): Income
+    public function setAmount(Money $amount): Earnings
     {
         $this->amount = $amount;
         return $this;
     }
 
-    public function increaseAmount(float $n): Income
+    public function increaseAmount(float $n): Earnings
     {
         $this->amount->add($n);
         return $this;
     }
 
-    public function setInflationRate(float $inflationRate): Income
+    public function setInflationRate(float $inflationRate): Earnings
     {
         $this->inflationRate = round($inflationRate, 3);
         return $this;
     }
 
-    public function setBeginYear(?int $beginYear): Income
+    public function setBeginYear(?int $beginYear): Earnings
     {
         $this->beginYear = $beginYear;
         return $this;
     }
 
-    public function setBeginMonth(?int $beginMonth): Income
+    public function setBeginMonth(?int $beginMonth): Earnings
     {
         $this->beginMonth = $beginMonth;
         return $this;
     }
 
-    public function setEndYear(?int $endYear): Income
+    public function setEndYear(?int $endYear): Earnings
     {
         $this->endYear = $endYear;
         return $this;
     }
 
-    public function setEndMonth(?int $endMonth): Income
+    public function setEndMonth(?int $endMonth): Earnings
     {
         $this->endMonth = $endMonth;
         return $this;
     }
 
-    public function setRepeatEvery(?int $repeatEvery): Income
+    public function setRepeatEvery(?int $repeatEvery): Earnings
     {
         $this->repeatEvery = $repeatEvery;
         return $this;
     }
 
-    public function markPlanned(): Income
+    public function markPlanned(): Earnings
     {
         $this->status = self::PLANNED;
         return $this;
     }
 
-    public function markActive(): Income
+    public function markActive(): Earnings
     {
         $this->status = self::ACTIVE;
         return $this;
     }
 
-    public function markEnded(): Income
+    public function markEnded(): Earnings
     {
         $this->status = self::ENDED;
         return $this;

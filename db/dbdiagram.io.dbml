@@ -51,11 +51,11 @@ Table asset {
   modified_at timestamp [default: `now()`]
 }
 
-Table income {
-  income_id integer [not null, increment, primary key]
+Table earnings {
+  earnings_id integer [not null, increment, primary key]
   scenario_id integer [not null]
-  income_name varchar [not null, unique]
-  income_descr varchar
+  earnings_name varchar [not null, unique]
+  earnings_descr varchar
   amount DECIMAL(13, 2) [not null]
   inflation_rate DECIMAL(5, 3)
   begin_year integer
@@ -73,8 +73,8 @@ Table simulation {
   simulation_descr varchar
   scenario_id__expense integer [not null]
   scenario_id__asset integer [not null]
-  scenario_id__income integer [not null]
   tax_rate DECIMAL(5, 3)
+  scenario_id__earnings integer [not null]
   periods integer
   start_year integer
   start_month integer
@@ -89,8 +89,8 @@ Ref: expense.scenario_id > scenario.scenario_id
 Ref: asset.scenario_id > scenario.scenario_id
 Ref: asset.begin_after > asset.asset_id
 
-Ref: income.scenario_id > scenario.scenario_id
+Ref: earnings.scenario_id > scenario.scenario_id
 
 Ref: simulation.scenario_id__expense > scenario.scenario_id
 Ref: simulation.scenario_id__asset > scenario.scenario_id
-Ref: simulation.scenario_id__income > scenario.scenario_id
+Ref: simulation.scenario_id__earnings > scenario.scenario_id

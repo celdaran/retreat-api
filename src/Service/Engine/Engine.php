@@ -4,17 +4,17 @@ use App\System\Log;
 use App\System\LogFactory;
 use App\Service\Scenario\ExpenseCollection;
 use App\Service\Scenario\AssetCollection;
-use App\Service\Scenario\IncomeCollection;
+use App\Service\Scenario\EarningsCollection;
 
 class Engine
 {
     private string $expenseScenarioName;
     private string $assetScenarioName;
-    private string $incomeScenarioName;
+    private string $earningsScenarioName;
 
     private ExpenseCollection $expenseCollection;
     private AssetCollection $assetCollection;
-    private IncomeCollection $incomeCollection;
+    private EarningsCollection $earningsCollection;
 
     private array $plan;
     private array $audit;
@@ -33,7 +33,7 @@ class Engine
     public function __construct(
         string $expenseScenarioName = 'base',
         string $assetScenarioName = null,
-        string $incomeScenarioName = null)
+        string $earningsScenarioName = null)
     {
         // Instantiate global logger
         $this->log = LogFactory::getLogger();
@@ -41,12 +41,12 @@ class Engine
         // Get scenario names
         $this->expenseScenarioName = $expenseScenarioName;
         $this->assetScenarioName = ($assetScenarioName === null) ? $expenseScenarioName : $assetScenarioName;
-        $this->incomeScenarioName = ($incomeScenarioName === null) ? $expenseScenarioName : $incomeScenarioName;
+        $this->earningsScenarioName = ($earningsScenarioName === null) ? $expenseScenarioName : $earningsScenarioName;
 
         // Instantiate main classes
         $this->expenseCollection = new ExpenseCollection($this->log);
         $this->assetCollection = new AssetCollection($this->log);
-        $this->incomeCollection = new IncomeCollection($this->log);
+        $this->earningsCollection = new EarningsCollection($this->log);
 
         $this->plan = [];
         $this->audit = [];
@@ -56,7 +56,7 @@ class Engine
         $this->audit = [
             'expense' => [],
             'asset' => [],
-            'income' => [],
+            'earnings' => [],
         ];
     }
 
@@ -69,7 +69,7 @@ class Engine
         // A "scenario" is an array of like items (an array of expenses, array of assets)
         $this->expenseCollection->loadScenario($this->expenseScenarioName);
         $this->assetCollection->loadScenario($this->assetScenarioName);
-        $this->incomeCollection->loadScenario($this->incomeScenarioName);
+        $this->earningsCollection->loadScenario($this->earningsScenarioName);
 
         // Track period (year and month)
         $this->currentPeriod = $this->expenseCollection->getStart($startYear, $startMonth);
@@ -77,7 +77,7 @@ class Engine
         $this->log->debug("Simulation parameters:");
         $this->log->debug(sprintf("  Expense scenario: %s", $this->expenseScenarioName));
         $this->log->debug(sprintf("  Asset scenario: %s", $this->assetScenarioName));
-        $this->log->debug(sprintf("  Income scenario: %s", $this->incomeScenarioName));
+        $this->log->debug(sprintf("  Earnings scenario: %s", $this->earningsScenarioName));
         $this->log->debug(sprintf("  Duration: %d", $periods));
         $this->log->debug(sprintf("  Start Year: %d", $this->currentPeriod->getYear()));
         $this->log->debug(sprintf("  Start Month: %d", $this->currentPeriod->getMonth()));
@@ -99,11 +99,11 @@ class Engine
             // Deal with income taxes
             $this->handleIncomeTax($expense);
 
-            // Find income to cover expenses
-            $income = $this->getIncomeForPeriod($expense);
+            // Find earnings to cover expenses
+            $earnings = $this->getEarningsForPeriod($expense);
 
             // Then pull from assets to cover any remaining expenses
-            $remainingExpense = $this->adjustAssetForPeriod($expense, $income);
+            $remainingExpense = $this->adjustAssetForPeriod($expense, $earnings);
 
             // Lastly record the plan
             $planEntry = [
@@ -111,7 +111,7 @@ class Engine
                 'year' => $this->currentPeriod->getYear(),
                 'month' => $this->currentPeriod->getMonth(),
                 'expense' => $expense,
-                'income' => $this->incomeCollection->getAmounts(),
+                'earnings' => $this->earningsCollection->getAmounts(),
                 'net_expense' => $remainingExpense,
                 'assets' => $this->assetCollection->getBalances(),
             ];
@@ -164,13 +164,13 @@ class Engine
     public function renderHeader(array $p): string
     {
         $payload = '';
-        if (count($p['income']) > 0) {
-            foreach (array_keys($p['income']) as $incomeName) {
-                $payload .= sprintf('"%s",', addslashes($incomeName));
+        if (count($p['earnings']) > 0) {
+            foreach (array_keys($p['earnings']) as $earningsName) {
+                $payload .= sprintf('"%s",', addslashes($earningsName));
             }
         }
-        $payload .= sprintf('"total income",');
-        $paylaod .= sprintf('"net expense",,');
+        $payload .= sprintf('"total earnings",');
+        $payload .= sprintf('"net expense",,');
         if (count($p['assets']) > 0) {
             foreach (array_keys($p['assets']) as $assetName) {
                 $payload .= sprintf('"%s",', addslashes($assetName));
@@ -183,14 +183,14 @@ class Engine
     public function renderLine(array $p): string
     {
         $payload = '';
-        $totalIncome = 0.00;
+        $totalEarnings = 0.00;
         $totalAssets = 0.00;
         $payload .= sprintf('%03d,%4d-%02d,%.2f,,', $p['period'], $p['year'], $p['month'], $p['expense']->value());
-        foreach ($p['income'] as $income) {
-            $payload .= sprintf('%.2f,', $income);
-            $totalIncome += $income;
+        foreach ($p['earnings'] as $earnings) {
+            $payload .= sprintf('%.2f,', $earnings);
+            $totalEarnings += $earnings;
         }
-        $payload .= sprintf('%.2f,', $totalIncome);
+        $payload .= sprintf('%.2f,', $totalEarnings);
         $payload .= sprintf('%.2f,,', $p['net_expense']->value());
         foreach ($p['assets'] as $asset) {
             $payload .= sprintf('%.2f,', $asset);
@@ -237,7 +237,7 @@ class Engine
             }
         }
 
-        foreach ($this->audit['income'] as $thing) {
+        foreach ($this->audit['earnings'] as $thing) {
             foreach ($thing as $i) {
                 $payload .= sprintf('%03d,%4d-%02d,"%s",%0.2f,%s' . "\n",
                     $i['period'], $i['year'], $i['month'],
@@ -267,7 +267,7 @@ class Engine
     {
         $this->audit['expense'][] = $this->expenseCollection->auditExpenses($this->currentPeriod);
         $this->audit['asset'][]   = $this->assetCollection->auditAssets($this->currentPeriod);
-        $this->audit['income'][]  = $this->incomeCollection->auditIncome($this->currentPeriod);
+        $this->audit['earnings'][]  = $this->earningsCollection->auditEarnings($this->currentPeriod);
     }
 
     /**
@@ -292,23 +292,27 @@ class Engine
         // If we're in the fourth period, calculate taxes
         // Note: this has issues. But it's good enough
         if ($this->currentPeriod->getCurrentPeriod() % 12 === 4) {
-            $taxAmount = Util::calculateIncomeTax($this->annualIncome->value(), $this->currentPeriod->getYear());
-            $expense->add($taxAmount);
-            $effectiveTaxRate = ($taxAmount / $this->annualIncome->value()) * 100;
-            $msg = sprintf("Paying income tax of %0.2f in period %d (effective tax rate: %0.1f%%)",
-                $taxAmount,
-                $this->currentPeriod->getCurrentPeriod(),
-                $effectiveTaxRate
-            );
-            $this->log->debug($msg);
-            $this->annualIncome->assign(0.00);
+            if ($this->annualIncome->value() > 0.00) {
+                $taxAmount = Util::calculateIncomeTax($this->annualIncome->value(), $this->currentPeriod->getYear());
+                $expense->add($taxAmount);
+                $effectiveTaxRate = ($taxAmount / $this->annualIncome->value()) * 100;
+                $msg = sprintf("Paying income tax of %0.2f in period %d (effective tax rate: %0.1f%%)",
+                    $taxAmount,
+                    $this->currentPeriod->getCurrentPeriod(),
+                    $effectiveTaxRate
+                );
+                $this->log->debug($msg);
+                $this->annualIncome->assign(0.00);
+            } else {
+                $this->log->warn("Annual income was 0.00");
+            }
         }
 
     }
 
-    private function getIncomeForPeriod(Money $expense): Money
+    private function getEarningsForPeriod(Money $expense): Money
     {
-        return $this->incomeCollection->tallyIncome($this->currentPeriod);
+        return $this->earningsCollection->tallyEarnings($this->currentPeriod);
     }
 
     /**
@@ -317,11 +321,11 @@ class Engine
      * 1) reducing one or more balances per the $expense per period
      * 2) increasing all balances to account for interest earned
      */
-    private function adjustAssetForPeriod(Money $expense, Money $income): Money
+    private function adjustAssetForPeriod(Money $expense, Money $earnings): Money
     {
         $remainingExpense = new Money();
         $remainingExpense->assign($expense->value());
-        $remainingExpense->subtract($income->value());
+        $remainingExpense->subtract($earnings->value());
 
         $total = $this->assetCollection->makeWithdrawals($this->currentPeriod, $remainingExpense);
         $this->assetCollection->earnInterest();
