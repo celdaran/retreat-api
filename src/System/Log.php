@@ -104,7 +104,7 @@ class Log
             $this->logs[] = $message;
 
             // Return
-            if ($this->output === 'FILE') {
+            if ($this->output === 'STDOUT') {
                 print($message);
             }
         }
