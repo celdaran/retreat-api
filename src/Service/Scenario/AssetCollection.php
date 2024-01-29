@@ -1,5 +1,7 @@
 <?php namespace App\Service\Scenario;
 
+use Exception;
+
 use App\Service\Engine\Asset;
 use App\Service\Engine\Money;
 use App\Service\Engine\Period;
@@ -13,10 +15,15 @@ class AssetCollection extends Scenario
      * Load a scenario
      *
      * @param string $scenarioName
+     * @throws Exception
      */
     public function loadScenario(string $scenarioName)
     {
          $rows = parent::getRowsForScenario($scenarioName, 'asset', $this->fetchQuery());
+        if (count($rows) === 0) {
+            $this->getLog()->error("No assets found for scenario $scenarioName");
+            throw new Exception("No assets found for scenario $scenarioName");
+        }
          $this->assets = $this->transform($rows);
     }
 
@@ -59,8 +66,10 @@ class AssetCollection extends Scenario
 
     /**
      * Withdraw money from fund(s) until expense is matched
+     * @return Money
+     * @throws Exception
      */
-    public function makeWithdrawals(Period $period, Money $expense): Money
+    public function makeWithdrawals(Period $period, Money $expense, Money &$annualIncome): Money
     {
         $total = new Money();
 
@@ -111,6 +120,9 @@ class AssetCollection extends Scenario
                     $asset->currentBalance()->subtract($amount->value());
                 }
 
+                $annualIncome->add($amount->value());
+                $this->getLog()->debug("Increasing annualIncome by amount: " . $amount->formatted());
+
                 $msg = sprintf('Current balance of asset "%s" is %s',
                     $asset->name(),
                     $asset->currentBalance()->formatted(),
@@ -133,6 +145,7 @@ class AssetCollection extends Scenario
                 $total->formatted(),
             );
             $this->getLog()->warn($msg);
+//            throw new Exception($msg);
         }
 
         return $total;
