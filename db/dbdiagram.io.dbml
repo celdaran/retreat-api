@@ -1,15 +1,16 @@
-// The online diagram is authoritative. This is a local, convenience copy and may be out of date
-
 // Use DBML to define your database structure
 // Docs: https://github.com/holistics/dbml/tree/master/dbml-homepage/docs
 
 Table scenario {
   scenario_id integer [not null, increment, primary key]
-  scenario_name varchar [not null, unique]
+  scenario_name varchar [not null]
   scenario_descr varchar
   account_type_id integer [not null]
   created_at timestamp [default: `now()`]
   modified_at timestamp [default: `now()`]
+  Indexes {
+    (scenario_name, account_type_id) [unique]
+  }
 }
 
 Table account_type {
@@ -73,7 +74,6 @@ Table simulation {
   simulation_descr varchar
   scenario_id__expense integer [not null]
   scenario_id__asset integer [not null]
-  tax_rate DECIMAL(5, 3)
   scenario_id__earnings integer [not null]
   periods integer
   start_year integer
