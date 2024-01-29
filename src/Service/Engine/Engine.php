@@ -198,10 +198,61 @@ class Engine
         return $expenses;
     }
 
-    private function handleIncomeTax(Money $expense)
+    private function getEarningsForPeriod(): Money
     {
-        // Keep a running total for tax purposes
-        $this->annualIncome->add($expense->value());
+        $earnings = $this->earningsCollection->tallyEarnings($this->currentPeriod);
+        $this->annualIncome->add($earnings->value());
+        $this->log->debug("Increasing annualIncome by amount: " . $earnings->formatted());
+        return $earnings;
+    }
+
+    /**
+     * Adjust assets per period
+     * This is two passes:
+     * 1) reducing one or more balances per the $expense per period
+     * 2) increasing all balances to account for interest earned
+     *
+     * @throws Exception
+     */
+    private function adjustAssetForPeriod(Money $expense, Money $earnings): Money
+    {
+        $shortfall = new Money();
+        $total = new Money();
+
+        // If earnings don't cover expenses, then we need to
+        // dip into our assets. Skip over this if earnings are
+        // enough to cover assets and continue with interest
+        if ($earnings->le($expense->value())) {
+            $shortfall->assign($expense->value());
+            $shortfall->subtract($earnings->value());
+            $total = $this->assetCollection->makeWithdrawals($this->currentPeriod, $shortfall, $this->annualIncome);
+        }
+
+        // Assets gain value at the end of each period
+        $this->assetCollection->earnInterest();
+
+        if ($total->value() < $shortfall->value()) {
+            // If we couldn't get enough assets to meet expenses, then
+            // reduce expenses to meet the available assets
+            // Why!?
+            $expense->assign($total->value());
+        } else {
+            // If we did, then our expenses are covered
+            $shortfall->assign(0.00);
+        }
+
+        return $shortfall;
+    }
+
+    private function payIncomeTax(Money $expense)
+    {
+        // Our monthly expenses will be met by income from earnings and asset sales
+        // But that entire figure is not subject to income tax and there are a myriad
+        // of conditions that are needed to come up with an accurate figure.
+        // BUT for the sake of a simulation, we'll just come up with a something
+        // and call that AGI
+
+        // Spit this out each period, regardless of whether we pay or not
         $this->log->debug("Annual income in period {$this->currentPeriod->getCurrentPeriod()} is {$this->annualIncome->formatted()}");
 
         // If we're in the fourth period, calculate taxes
@@ -222,36 +273,6 @@ class Engine
                 $this->log->warn("Annual income was 0.00");
             }
         }
-
-    }
-
-    private function getEarningsForPeriod(Money $expense): Money
-    {
-        return $this->earningsCollection->tallyEarnings($this->currentPeriod);
-    }
-
-    /**
-     * Adjust assets per period
-     * This is two passes:
-     * 1) reducing one or more balances per the $expense per period
-     * 2) increasing all balances to account for interest earned
-     */
-    private function adjustAssetForPeriod(Money $expense, Money $earnings): Money
-    {
-        $remainingExpense = new Money();
-        $remainingExpense->assign($expense->value());
-        $remainingExpense->subtract($earnings->value());
-
-        $total = $this->assetCollection->makeWithdrawals($this->currentPeriod, $remainingExpense);
-        $this->assetCollection->earnInterest();
-
-        if ($total->value() < $expense->value()) {
-            // If we couldn't get enough assets to meet expenses, then
-            // reduce expenses to meet the available assets
-            $expense->assign($total->value());
-        }
-
-        return $remainingExpense;
     }
 
 }
