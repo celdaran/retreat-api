@@ -142,88 +142,7 @@ class Engine
         return $this->log->getLogs();
     }
 
-    public function render($format = 'csv') : array
-    {
-        $payload = [];
-        switch ($format) {
-            case 'csv':
-                $payload[] = sprintf('%s,%s,%s,,', 'period', 'month', 'expense');
-                $i = 0;
-                foreach ($this->plan as $p) {
-                    // Header
-                    if ($i === 0) {
-                        $payload[] = $this->renderHeader($p);
-                    }
-        
-                    // Body
-                    $this->renderLine($p);
-                    $i++;
-                }
-            return $payload;
-
-            case 'json':
-                $payload = [];
-            return $payload;
-
-        }
-    }
-
-    public function renderHeader(array $p): string
-    {
-        $payload = '';
-        if (count($p['earnings']) > 0) {
-            foreach (array_keys($p['earnings']) as $earningsName) {
-                $payload .= sprintf('"%s",', addslashes($earningsName));
-            }
-        }
-        $payload .= sprintf('"total earnings",');
-        $payload .= sprintf('"net expense",,');
-        if (count($p['assets']) > 0) {
-            foreach (array_keys($p['assets']) as $assetName) {
-                $payload .= sprintf('"%s",', addslashes($assetName));
-            }
-        }
-        $payload .= sprintf('"total assets"' . "\n");
-        return $payload;
-    }
-
-    public function renderLine(array $p): string
-    {
-        $payload = '';
-        $totalEarnings = 0.00;
-        $totalAssets = 0.00;
-        $payload .= sprintf('%03d,%4d-%02d,%.2f,,', $p['period'], $p['year'], $p['month'], $p['expense']->value());
-        foreach ($p['earnings'] as $earnings) {
-            $payload .= sprintf('%.2f,', $earnings);
-            $totalEarnings += $earnings;
-        }
-        $payload .= sprintf('%.2f,', $totalEarnings);
-        $payload .= sprintf('%.2f,,', $p['net_expense']->value());
-        foreach ($p['assets'] as $asset) {
-            $payload .= sprintf('%.2f,', $asset);
-            $totalAssets += $asset;
-        }
-        $payload .= sprintf($totalAssets . "\n");
-    }
-
-    public function report(): string
-    {
-        $payload = '';
-        $total = new Money();
-
-        /** @var Asset $asset */
-        foreach ($this->assetCollection->getAssets() as $asset) {
-            $total->add($asset->currentBalance()->value());
-            $payload .= sprintf("Asset: %s\n", $asset->name());
-            $payload .= sprintf("  Current balance: %s\n", $asset->currentBalance()->formatted());
-            $payload .= sprintf("\n");
-        }
-
-        $payload .= printf("Total assets: %s\n", $total->formatted());
-        return $payload;
-    }
-
-    public function audit(): string
+    public function getAudit(): string
     {
         $payload = '';
 
@@ -258,17 +177,6 @@ class Engine
     //------------------------------------------------------------------
     // Private functions
     //------------------------------------------------------------------
-
-//    private function adjustScenario(array &$scenario, int $startYear, int $startMonth)
-//    {
-//        for ($i = 0; $i < count($scenario); $i++) {
-//            if ($scenario[$i]['fixed_period'] !== 1) {
-//                // If it's not fixed, then it's subject to adjustment
-//                $scenario[$i]['begin_year'] = $startYear;
-//                $scenario[$i]['begin_month'] = $startMonth;
-//            }
-//        }
-//    }
 
     private function appendToAudit()
     {

@@ -15,6 +15,7 @@ class ExpenseCollection extends Scenario
      * Load a scenario
      *
      * @param string $scenarioName
+     * @throws Exception
      */
     public function loadScenario(string $scenarioName)
     {
@@ -25,23 +26,6 @@ class ExpenseCollection extends Scenario
             throw new Exception("No expenses found for scenario $scenarioName");
         }
         $this->expenses = $this->transform($rows);
-    }
-
-    /**
-     * Primarily for unit testing
-     * @param string $scenarioName
-     * @param array $scenarios
-     */
-    public function loadScenarioFromMemory(string $scenarioName, array $scenarios)
-    {
-        $this->scenarioName = $scenarioName;
-        $rows = $scenarios[$scenarioName];
-        $this->expenses = $this->transform($rows);
-    }
-
-    public function getExpenses(): array
-    {
-        return $this->expenses;
     }
 
     public function getAmounts(bool $formatted = false): array
@@ -95,8 +79,7 @@ class ExpenseCollection extends Scenario
                 SELECT min(e.begin_year) AS startYear 
                 FROM expense e
                 JOIN scenario s ON s.scenario_id = e.scenario_id
-                WHERE s.scenario_name = :scenario_name"
-            ;
+                WHERE s.scenario_name = :scenario_name";
             $rows = $this->getData()->select($sql, ['scenario_name' => $this->scenarioName]);
             $startYear = $rows[0]['startYear'];
         }
@@ -109,7 +92,8 @@ class ExpenseCollection extends Scenario
                 WHERE s.scenario_name = :scenario_name
                   AND e.begin_year = :begin_year
             ";
-            $rows = $this->getData()->select($sql, ['scenario_name' => $this->scenarioName, 'begin_year' => $startYear]);
+            $rows = $this->getData()->select($sql,
+                ['scenario_name' => $this->scenarioName, 'begin_year' => $startYear]);
             $startMonth = $rows[0]['startMonth'];
         }
 
@@ -170,7 +154,8 @@ class ExpenseCollection extends Scenario
                         $expense->repeatEvery(),
                     );
                     $this->getLog()->debug($msg);
-                    $nextPeriod = $period->addMonths($expense->beginYear(), $expense->beginMonth(), $expense->repeatEvery());
+                    $nextPeriod = $period->addMonths($expense->beginYear(), $expense->beginMonth(),
+                        $expense->repeatEvery());
                     $expense->markPlanned();
                     $expense->setBeginYear($nextPeriod->getYear());
                     $expense->setBeginMonth($nextPeriod->getMonth());
@@ -221,8 +206,7 @@ class ExpenseCollection extends Scenario
                 ->setEndYear($row['end_year'])
                 ->setEndMonth($row['end_month'])
                 ->setRepeatEvery($row['repeat_every'])
-                ->markPlanned()
-            ;
+                ->markPlanned();
             $collection[] = $expense;
         }
 

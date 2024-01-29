@@ -3,7 +3,8 @@
 /**
  * A class representing an expense
  */
-class Expense {
+class Expense
+{
 
     const PLANNED = 0;
     const ACTIVE = 1;
@@ -17,7 +18,6 @@ class Expense {
     protected ?int $endYear;
     protected ?int $endMonth;
     protected ?int $repeatEvery;
-    protected bool $fixedPeriod;
     protected int $status;
 
     public function __construct()
@@ -79,12 +79,6 @@ class Expense {
     public function setRepeatEvery(?int $repeatEvery): Expense
     {
         $this->repeatEvery = $repeatEvery;
-        return $this;
-    }
-
-    public function setFixedPeriod(bool $fixedPeriod): Expense
-    {
-        $this->fixedPeriod = $fixedPeriod;
         return $this;
     }
 
@@ -150,11 +144,6 @@ class Expense {
         return $this->repeatEvery;
     }
 
-    public function fixedPeriod(): bool
-    {
-        return $this->fixedPeriod;
-    }
-
     public function isPlanned(): bool
     {
         return $this->status === self::PLANNED;
@@ -165,22 +154,14 @@ class Expense {
         return $this->status === self::ACTIVE;
     }
 
-    public function isEnded(): bool
-    {
-        return $this->status === self::ENDED;
-    }
-
     public function status(): string
     {
-        switch ($this->status) {
-            case self::PLANNED:
-                return 'planned';
-            case self::ACTIVE:
-                return 'active';
-            case self::ENDED:
-                return 'ended';
-        }
-        return 'unknown';
+        return match ($this->status) {
+            self::PLANNED => 'planned',
+            self::ACTIVE => 'active',
+            self::ENDED => 'ended',
+            default => 'unknown',
+        };
     }
 
     public function timeToActivate(Period $period): bool

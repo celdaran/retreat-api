@@ -10,8 +10,6 @@ class Simulation
     /**
      * @url POST /summary
      *
-     * @api
-     *
      * @param string $expense
      * @param string $asset
      * @param string $earnings
@@ -21,6 +19,8 @@ class Simulation
      * @param string $startMonth
      *
      * @return array
+     * @api
+     *
      */
     public function summary(
         string $expense,
@@ -53,8 +53,6 @@ class Simulation
     /**
      * @url POST /asset/depletion
      *
-     * @api
-     *
      * @param string $expense
      * @param string $asset
      * @param string $earnings
@@ -64,6 +62,8 @@ class Simulation
      * @param string $startMonth
      *
      * @return array
+     * @api
+     *
      */
     public function assetDepletion(
         string $expense,
@@ -178,8 +178,8 @@ class Simulation
      * @param string $startYear
      * @param string $startMonth
      *
-     * @throws Exception
      * @return array
+     * @throws Exception
      */
     private function getPlan(
         string $expense,

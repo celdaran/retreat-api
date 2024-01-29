@@ -3,7 +3,8 @@
 /**
  * A class for handling periods
  */
-class Period {
+class Period
+{
 
     protected int $year;
     protected int $month;

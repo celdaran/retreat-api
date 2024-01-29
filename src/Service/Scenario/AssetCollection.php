@@ -19,28 +19,12 @@ class AssetCollection extends Scenario
      */
     public function loadScenario(string $scenarioName)
     {
-         $rows = parent::getRowsForScenario($scenarioName, 'asset', $this->fetchQuery());
+        $rows = parent::getRowsForScenario($scenarioName, 'asset', $this->fetchQuery());
         if (count($rows) === 0) {
             $this->getLog()->error("No assets found for scenario $scenarioName");
             throw new Exception("No assets found for scenario $scenarioName");
         }
-         $this->assets = $this->transform($rows);
-    }
-
-    /**
-     * Primarily for unit testing
-     * @param string $scenarioName
-     * @param array $scenarios
-     */
-    public function loadScenarioFromMemory(string $scenarioName, array $scenarios)
-    {
-        $rows = $scenarios[$scenarioName];
         $this->assets = $this->transform($rows);
-    }
-
-    public function getAssets(): array
-    {
-        return $this->assets;
     }
 
     public function auditAssets(Period $period): array
@@ -66,10 +50,12 @@ class AssetCollection extends Scenario
 
     /**
      * Withdraw money from fund(s) until expense is matched
+     * @param Period $period
+     * @param Money $expense
+     * @param Money $annualIncome
      * @return Money
-     * @throws Exception
      */
-    public function makeWithdrawals(Period $period, Money $expense, Money &$annualIncome): Money
+    public function makeWithdrawals(Period $period, Money $expense, Money $annualIncome): Money
     {
         $total = new Money();
 
@@ -84,7 +70,7 @@ class AssetCollection extends Scenario
                 $amount = new Money();
                 $amount->assign(
                     min(// The smallest of:
-                        // The full expense pulled from the source (e.g., drawing $5,000 from a $50,000 source)
+                    // The full expense pulled from the source (e.g., drawing $5,000 from a $50,000 source)
                         $expense->value(),
                         // Unless a maximum withdrawal amount caps the above
                         $asset->maxWithdrawal()->value(),
@@ -244,8 +230,7 @@ class AssetCollection extends Scenario
                 ->setBeginAfter($row['begin_after'])
                 ->setBeginYear($row['begin_year'])
                 ->setBeginMonth($row['begin_month'])
-                ->markUntapped()
-            ;
+                ->markUntapped();
             $collection[] = $asset;
         }
 

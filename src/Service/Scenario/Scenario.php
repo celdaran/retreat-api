@@ -1,5 +1,6 @@
 <?php namespace App\Service\Scenario;
 
+use Exception;
 use App\System\Log;
 use App\System\Database;
 
@@ -15,7 +16,7 @@ class Scenario
         try {
             $this->data = new Database($this->log);
             $this->data->connect($_ENV['DBHOST'], $_ENV['DBUSER'], $_ENV['DBPASS'], $_ENV['DBNAME']);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->log->warn($e->getMessage());
         }
 
@@ -35,8 +36,9 @@ class Scenario
     {
         // Create new scenario
         $sql = "INSERT INTO scenario (scenario_name, scenario_descr, account_type_id) VALUES (:newScenarioName, :newScenarioDescr, :newAccountType)";
-        $sth = $this->data->exec($sql, ['newScenarioName' => $newScenarioName, 'newScenarioDescr' => $newScenarioDescr, 'newAccountType' => $newAccountType]);
-        $error = $this->data->lastError();
+        $this->data->exec($sql,
+            ['newScenarioName' => $newScenarioName, 'newScenarioDescr' => $newScenarioDescr, 'newAccountType' => $newAccountType]);
+        // $error = $this->data->lastError();
 
         // Fetch new scenario ID
         $newScenarioId = $this->data->lastInsertId();
@@ -48,8 +50,8 @@ class Scenario
             FROM expense
             WHERE scenario_id = :oldScenarioId
         ";
-        $sth = $this->data->exec($sql, ['oldScenarioId' => $oldScenarioId, 'newScenarioId' => $newScenarioId]);
-        $error = $this->data->lastError();
+        $this->data->exec($sql, ['oldScenarioId' => $oldScenarioId, 'newScenarioId' => $newScenarioId]);
+        // $error = $this->data->lastError();
     }
 
     protected function getRowsForScenario(string $scenarioName, string $scenarioType, string $sql): array

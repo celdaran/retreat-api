@@ -3,7 +3,8 @@
 /**
  * A class representing an asset
  */
-class Asset {
+class Asset
+{
 
     const UNTAPPED = 0;
     const ACTIVE = 1;
@@ -18,7 +19,6 @@ class Asset {
     protected ?int $beginAfter;
     protected ?int $beginYear;
     protected ?int $beginMonth;
-    protected bool $fixedPeriod;
     protected int $status;
 
     public function __construct()
@@ -86,12 +86,6 @@ class Asset {
     public function setBeginMonth(?int $beginMonth): Asset
     {
         $this->beginMonth = $beginMonth;
-        return $this;
-    }
-
-    public function setFixedPeriod(bool $fixedPeriod): Asset
-    {
-        $this->fixedPeriod = $fixedPeriod;
         return $this;
     }
 
@@ -165,11 +159,6 @@ class Asset {
         return $this->beginMonth;
     }
 
-    public function fixedPeriod(): bool
-    {
-        return $this->fixedPeriod;
-    }
-
     public function isUntapped(): bool
     {
         return $this->status === self::UNTAPPED;
@@ -187,15 +176,12 @@ class Asset {
 
     public function status(): string
     {
-        switch ($this->status) {
-            case self::UNTAPPED:
-                return 'untapped';
-            case self::ACTIVE:
-                return 'active';
-            case self::DEPLETED:
-                return 'depleted';
-        }
-        return 'unknown';
+        return match ($this->status) {
+            self::UNTAPPED => 'untapped',
+            self::ACTIVE => 'active',
+            self::DEPLETED => 'depleted',
+            default => 'unknown',
+        };
     }
 
     //--------------------------------------------

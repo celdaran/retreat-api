@@ -1,6 +1,7 @@
 <?php namespace App\Service\Engine;
 
-class Util {
+class Util
+{
 
     /**
      * Calculate compound interest
@@ -68,8 +69,8 @@ class Util {
      * @param int $year
      * @return float
      */
-    public static function calculateIncomeTax(float $income, int $year): float {
-
+    public static function calculateIncomeTax(float $income, int $year): float
+    {
         // Base tax brackets and rates for 2024, married filing jointly
         // NOTE: min is calculated after inflation estimates
         $taxBrackets = [
@@ -108,7 +109,7 @@ class Util {
         }
 
         // Apply deduction
-        $income =- $standardDeduction;
+        $income -= $standardDeduction;
         if ($income < 0) {
             return 0.00;
         }

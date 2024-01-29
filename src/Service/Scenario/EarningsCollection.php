@@ -3,11 +3,9 @@
 use App\Service\Engine\Earnings;
 use App\Service\Engine\Money;
 use App\Service\Engine\Period;
-use App\Service\Engine\Util;
 
 class EarningsCollection extends Scenario
 {
-    private string $scenarioName;
     private array $earnings = [];
 
     /**
@@ -17,26 +15,8 @@ class EarningsCollection extends Scenario
      */
     public function loadScenario(string $scenarioName)
     {
-        $this->scenarioName = $scenarioName;
-         $rows = parent::getRowsForScenario($scenarioName, 'earnings', $this->fetchQuery());
-         $this->earnings = $this->transform($rows);
-    }
-
-    /**
-     * Primarily for unit testing
-     * @param string $scenarioName
-     * @param array $scenarios
-     */
-    public function loadScenarioFromMemory(string $scenarioName, array $scenarios)
-    {
-        $this->scenarioName = $scenarioName;
-        $rows = $scenarios[$scenarioName];
+        $rows = parent::getRowsForScenario($scenarioName, 'earnings', $this->fetchQuery());
         $this->earnings = $this->transform($rows);
-    }
-
-    public function getEarnings(): array
-    {
-        return $this->earnings;
     }
 
     public function auditEarnings(Period $period): array
@@ -104,18 +84,19 @@ class EarningsCollection extends Scenario
                     break;
                 case 'nope':
                     break;
-                    case 'reschedule';
-                        $msg = sprintf('Ending earnings "%s" in %4d-%02d, but rescheduling %s months out',
-                            $earnings->name(),
-                            $period->getYear(),
-                            $period->getMonth(),
-                            $earnings->repeatEvery(),
-                        );
-                        $this->getLog()->debug($msg);
-                        $nextPeriod = $period->addMonths($earnings->beginYear(), $earnings->beginMonth(), $earnings->repeatEvery());
-                        $earnings->markPlanned();
-                        $earnings->setBeginYear($nextPeriod->getYear());
-                        $earnings->setBeginMonth($nextPeriod->getMonth());
+                case 'reschedule';
+                    $msg = sprintf('Ending earnings "%s" in %4d-%02d, but rescheduling %s months out',
+                        $earnings->name(),
+                        $period->getYear(),
+                        $period->getMonth(),
+                        $earnings->repeatEvery(),
+                    );
+                    $this->getLog()->debug($msg);
+                    $nextPeriod = $period->addMonths($earnings->beginYear(), $earnings->beginMonth(),
+                        $earnings->repeatEvery());
+                    $earnings->markPlanned();
+                    $earnings->setBeginYear($nextPeriod->getYear());
+                    $earnings->setBeginMonth($nextPeriod->getMonth());
                     break;
             }
         }
@@ -123,14 +104,14 @@ class EarningsCollection extends Scenario
         return $total;
     }
 
-    public function applyInflation()
-    {
-        /** @var Earnings $earnings */
-        foreach ($this->earnings as $earnings) {
-            $interest = Util::calculateInterest($earnings->amount()->value(), $earnings->inflationRate());
-            $earnings->increaseAmount($interest);
-        }
-    }
+//    public function applyInflation()
+//    {
+//        /** @var Earnings $earnings */
+//        foreach ($this->earnings as $earnings) {
+//            $interest = Util::calculateInterest($earnings->amount()->value(), $earnings->inflationRate());
+//            $earnings->increaseAmount($interest);
+//        }
+//    }
 
     public function getAmounts(bool $formatted = false): array
     {
@@ -181,8 +162,7 @@ class EarningsCollection extends Scenario
                 ->setEndYear($row['end_year'])
                 ->setEndMonth($row['end_month'])
                 ->setRepeatEvery($row['repeat_every'])
-                ->markPlanned()
-            ;
+                ->markPlanned();
             $collection[] = $earnings;
         }
 

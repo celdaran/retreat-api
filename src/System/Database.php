@@ -2,6 +2,7 @@
 
 use PDO;
 use PDOException;
+use PDOStatement;
 
 class Database
 {
@@ -29,13 +30,13 @@ class Database
         }
     }
 
-    public function select(string $query, array $parameters = [])
+    public function select(string $query, array $parameters = []): array
     {
         $sth = $this->exec($query, $parameters);
         return $sth->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function exec(string $query, array $parameters = [])
+    public function exec(string $query, array $parameters = []): PDOStatement
     {
         $sth = $this->dbh->prepare($query);
         $sth->execute($parameters);
@@ -44,12 +45,12 @@ class Database
         return $sth;
     }
 
-    public function lastInsertId()
+    public function lastInsertId(): int
     {
         return $this->lastInsertId;
     }
 
-    public function lastError()
+    public function lastError(): array
     {
         return $this->lastError;
     }

@@ -5,7 +5,8 @@
  * Or, more directly, a class to deal with
  * the issue of floats vs. currency.
  */
-class Money {
+class Money
+{
 
     protected float $value;
 
@@ -55,11 +56,6 @@ class Money {
     public function le(float $n): bool
     {
         return $this->r($this->value) <= $this->r($n);
-    }
-
-    public function isZero(float $a): bool
-    {
-        return $this->r($a) === $this->r(0.00);
     }
 
     //--------------------------------------------

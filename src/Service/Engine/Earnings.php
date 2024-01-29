@@ -3,7 +3,8 @@
 /**
  * A class representing a source of earnings
  */
-class Earnings {
+class Earnings
+{
 
     const PLANNED = 0;
     const ACTIVE = 1;
@@ -18,10 +19,6 @@ class Earnings {
     protected ?int $endMonth;
     protected ?int $repeatEvery;
     protected int $status;
-
-    public function __construct()
-    {
-    }
 
     //--------------------------------------------
     // Setters
@@ -153,22 +150,14 @@ class Earnings {
         return $this->status === self::ACTIVE;
     }
 
-    public function isEnded(): bool
-    {
-        return $this->status === self::ENDED;
-    }
-
     public function status(): string
     {
-        switch ($this->status) {
-            case self::PLANNED:
-                return 'planned';
-            case self::ACTIVE:
-                return 'active';
-            case self::ENDED:
-                return 'ended';
-        }
-        return 'unknown';
+        return match ($this->status) {
+            self::PLANNED => 'planned',
+            self::ACTIVE => 'active',
+            self::ENDED => 'ended',
+            default => 'unknown',
+        };
     }
 
     public function timeToActivate(Period $period): bool
@@ -194,15 +183,15 @@ class Earnings {
             if ($this->endYear() === null) {
                 $compare = -1;
             } else {
-            $compare = Util::periodCompare(
-                $period->getYear(), $period->getMonth(),
-                $this->endYear(), $this->endMonth()
-            );
+                $compare = Util::periodCompare(
+                    $period->getYear(), $period->getMonth(),
+                    $this->endYear(), $this->endMonth()
+                );
             }
 
             // Must check repeating to determine next steps
             if ($this->repeatEvery() === null) {
-            if ($compare >= 0) {
+                if ($compare >= 0) {
                     return 'yep';
                 } else {
                     return 'nope';

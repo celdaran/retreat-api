@@ -5,7 +5,7 @@ class Log
     /** @var int */
     private int $level = 0;
 
-    /** @var int */
+    /** @var string */
     private string $output = 'FILE';
 
     /** @var array|string[] */

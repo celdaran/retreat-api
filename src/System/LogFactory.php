@@ -1,10 +1,11 @@
 <?php namespace App\System;
 
-class LogFactory {
+class LogFactory
+{
 
     private static ?Log $log = null;
 
-    public static function getLogger() : Log
+    public static function getLogger(): Log
     {
         if (self::$log === null) {
             $log = new Log();
