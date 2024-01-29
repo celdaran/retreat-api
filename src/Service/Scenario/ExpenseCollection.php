@@ -1,5 +1,6 @@
 <?php namespace App\Service\Scenario;
 
+use Exception;
 use App\Service\Engine\Expense;
 use App\Service\Engine\Money;
 use App\Service\Engine\Period;
@@ -19,6 +20,10 @@ class ExpenseCollection extends Scenario
     {
         $this->scenarioName = $scenarioName;
         $rows = parent::getRowsForScenario($scenarioName, 'expense', $this->fetchQuery());
+        if (count($rows) === 0) {
+            $this->getLog()->error("No expenses found for scenario $scenarioName");
+            throw new Exception("No expenses found for scenario $scenarioName");
+        }
         $this->expenses = $this->transform($rows);
     }
 
@@ -37,6 +42,24 @@ class ExpenseCollection extends Scenario
     public function getExpenses(): array
     {
         return $this->expenses;
+    }
+
+    public function getAmounts(bool $formatted = false): array
+    {
+        $amounts = [];
+        /** @var Expense $expense */
+        foreach ($this->expenses as $expense) {
+            if ($expense->isActive()) {
+                $amounts[$expense->name()] = $formatted ?
+                    $expense->amount()->formatted() :
+                    $expense->amount()->value();
+            } else {
+                $amounts[$expense->name()] = $formatted ?
+                    'Inactive' :
+                    null;
+            }
+        }
+        return $amounts;
     }
 
     public function auditExpenses(Period $period): array
