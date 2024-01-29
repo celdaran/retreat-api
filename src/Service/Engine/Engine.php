@@ -1,5 +1,7 @@
 <?php namespace App\Service\Engine;
 
+use Exception;
+
 use App\System\Log;
 use App\System\LogFactory;
 use App\Service\Scenario\ExpenseCollection;
@@ -62,6 +64,7 @@ class Engine
 
     /**
      * Core function of the engine: to take all inputs and generate a plan
+     * @throws Exception
      */
     public function run(int $periods, ?int $startYear = null, ?int $startMonth = null): bool
     {
@@ -94,26 +97,30 @@ class Engine
             $this->appendToAudit();
 
             // Start by tallying all expenses for period
+            // e.g., I have $2000 in expenses this month
             $expense = $this->getExpensesForPeriod();
 
+            // Find earnings
+            // e.g., I have a side job which brings in $250 per month
+            $earnings = $this->getEarningsForPeriod();
+
+            // If earnings doesn't cover it, pull from assets
+            // e.g., I now need to pull $1750 from assets to cover expenses
+            $shortfall = $this->adjustAssetForPeriod($expense, $earnings);
+
             // Deal with income taxes
-            $this->handleIncomeTax($expense);
-
-            // Find earnings to cover expenses
-            $earnings = $this->getEarningsForPeriod($expense);
-
-            // Then pull from assets to cover any remaining expenses
-            $remainingExpense = $this->adjustAssetForPeriod($expense, $earnings);
+            $this->payIncomeTax($expense);
 
             // Lastly record the plan
             $planEntry = [
                 'period' => $this->currentPeriod->getCurrentPeriod(),
                 'year' => $this->currentPeriod->getYear(),
                 'month' => $this->currentPeriod->getMonth(),
-                'expense' => $expense,
+                'expense' => $expense->value(),
+                'expenses' => $this->expenseCollection->getAmounts(),
                 'earnings' => $this->earningsCollection->getAmounts(),
-                'net_expense' => $remainingExpense,
                 'assets' => $this->assetCollection->getBalances(),
+                'shortfall' => $shortfall->value(),
             ];
             $this->plan[] = $planEntry;
 
