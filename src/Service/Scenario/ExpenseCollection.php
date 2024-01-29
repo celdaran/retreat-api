@@ -197,7 +197,7 @@ class ExpenseCollection extends Scenario
      */
     private function fetchQuery(): string
     {
-        return file_get_contents(__DIR__ . '/../../../sql/expense-query.sql');
+        return file_get_contents(__DIR__ . '/../../Resources/SQL/expense-query.sql');
     }
 
     /**

@@ -157,7 +157,7 @@ class EarningsCollection extends Scenario
      */
     private function fetchQuery(): string
     {
-        return file_get_contents(__DIR__ . '/../../../sql/earnings-query.sql');
+        return file_get_contents(__DIR__ . '/../../Resources/SQL/earnings-query.sql');
     }
 
     /**
