@@ -2,7 +2,9 @@
 
 use PHPUnit\Framework\TestCase;
 
-use App\Service\Data\AssetCollection;
+use App\System\Log;
+use App\System\LogFactory;
+use App\Service\Scenario\AssetCollection;
 use App\Service\Engine\Period;
 use App\Service\Engine\Asset;
 use App\Service\Engine\Money;
@@ -10,309 +12,566 @@ use App\Service\Engine\Money;
 final class assetCollectionClassTest extends TestCase
 {
     private static AssetCollection $assetCollection;
-    private static array $scenarios;
+    private static Log $log;
 
     public static function setUpBeforeClass(): void
     {
-        self::$assetCollection = new AssetCollection();
-
-        self::$scenarios = [
-            'scenario1' => [
-                [
-                    'asset_id' => 1,
-                    'asset_name' => 'asset number 1',
-                    'opening_balance' => 1000.00,
-                    'max_withdrawal' => 10.00,
-                    'apr' => 1.000,
-                    'begin_after' => null,
-                    'begin_year' => 2026,
-                    'begin_month' => 1,
-                ],
-                [
-                    'asset_id' => 2,
-                    'asset_name' => 'asset number 2',
-                    'opening_balance' => 2000.00,
-                    'max_withdrawal' => 500.00,
-                    'apr' => 2.000,
-                    'begin_after' => null,
-                    'begin_year' => 2026,
-                    'begin_month' => 1,
-                ],
-                [
-                    'asset_id' => 3,
-                    'asset_name' => 'asset number 3',
-                    'opening_balance' => 750.00,
-                    'max_withdrawal' => 75.00,
-                    'apr' => 3.000,
-                    'begin_after' => null,
-                    'begin_year' => 2026,
-                    'begin_month' => 1,
-                ],
-            ],
-
-            'scenario2' => [
-                [
-                    'asset_id' => 1,
-                    'asset_name' => 'asset number 1',
-                    'opening_balance' => 20.00,
-                    'max_withdrawal' => 10.00,
-                    'apr' => 0.000,
-                    'begin_after' => null,
-                    'begin_year' => 2026,
-                    'begin_month' => 1,
-                ],
-                [
-                    'asset_id' => 2,
-                    'asset_name' => 'asset number 2',
-                    'opening_balance' => 50.00,
-                    'max_withdrawal' => 50.00,
-                    'apr' => 0.000,
-                    'begin_after' => null,
-                    'begin_year' => 2026,
-                    'begin_month' => 2,
-                ],
-                [
-                    'asset_id' => 3,
-                    'asset_name' => 'asset number 3',
-                    'opening_balance' => 10.00,
-                    'max_withdrawal' => 10.00,
-                    'apr' => 0.000,
-                    'begin_after' => null,
-                    'begin_year' => 2026,
-                    'begin_month' => 1,
-                ],
-            ],
-
-            'scenario3' => [
-                [
-                    'asset_id' => 1,
-                    'asset_name' => 'asset number 1',
-                    'opening_balance' => 20.00,
-                    'max_withdrawal' => 10.00,
-                    'apr' => 2.000,
-                    'begin_after' => null,
-                    'begin_year' => 2026,
-                    'begin_month' => 1,
-                ],
-                [
-                    'asset_id' => 2,
-                    'asset_name' => 'asset number 2',
-                    'opening_balance' => 50.00,
-                    'max_withdrawal' => 50.00,
-                    'apr' => 1.500,
-                    'begin_after' => null,
-                    'begin_year' => 2026,
-                    'begin_month' => 2,
-                ],
-                [
-                    'asset_id' => 3,
-                    'asset_name' => 'asset number 3',
-                    'opening_balance' => 10.00,
-                    'max_withdrawal' => 10.00,
-                    'apr' => 0.375,
-                    'begin_after' => null,
-                    'begin_year' => 2026,
-                    'begin_month' => 1,
-                ],
-                [
-                    'asset_id' => 4,
-                    'asset_name' => 'asset number 4',
-                    'opening_balance' => 200.00,
-                    'max_withdrawal' => 50.00,
-                    'apr' => 0.000,
-                    'begin_after' => null,
-                    'begin_year' => 2026,
-                    'begin_month' => 6,
-                ],
-            ],
-        ];
+        self::$log = LogFactory::getLogger();
+        self::$assetCollection = new AssetCollection(self::$log);
     }
 
-    public function testMakeWithdrawals(): void
+    /**
+     * @throws Exception
+     */
+    public function testCount(): void
     {
-        self::$assetCollection->loadScenarioFromMemory('scenario1', self::$scenarios);
+        self::$assetCollection->loadScenario('no-such-scenario');
+        $count = self::$assetCollection->count();
+        $this->assertEquals(0, $count);
 
-        $period = new Period(2026, 1);
-        $expense = new Money(50.00);
-        $expected = new Money(50.00);
+        self::$assetCollection->loadScenario('ut01-assets');
+        $count = self::$assetCollection->count();
+        $this->assertEquals(1, $count);
 
-        self::$assetCollection->activateAssets($period);
+        self::$assetCollection->loadScenario('ut02-assets');
+        $count = self::$assetCollection->count();
+        $this->assertEquals(2, $count);
 
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense);
-        $this->assertEquals($expected, $actual, '$50.00 can be drawn from scenario1');
+        self::$assetCollection->loadScenario('ut03-assets');
+        $count = self::$assetCollection->count();
+        $this->assertEquals(3, $count);
+    }
 
+    /**
+     * @throws Exception
+     */
+    public function testGetBalances(): void
+    {
+        self::$assetCollection->loadScenario('ut01-assets');
+        $balances = self::$assetCollection->getBalances(false);
+        $this->assertCount(1, $balances);
+        $this->assertEquals(1000.00, $balances['Asset 1']);
+
+        self::$assetCollection->loadScenario('ut02-assets');
+        $balances = self::$assetCollection->getBalances(false);
+        $this->assertCount(2, $balances);
+        $this->assertEquals(500.00, $balances['Asset 1']);
+        $this->assertEquals(1000.00, $balances['Asset 2']);
+
+        self::$assetCollection->loadScenario('ut03-assets');
+        $balances = self::$assetCollection->getBalances();
+        $this->assertCount(3, $balances);
+        $this->assertEquals(300.00, $balances['Asset 1']);
+        $this->assertEquals(300.00, $balances['Asset 2']);
+        $this->assertEquals(600.00, $balances['Asset 3']);
+
+        $balances = self::$assetCollection->getBalances(false);
+        $this->assertCount(3, $balances);
+        $this->assertEquals(300.00, $balances['Asset 1']);
+        $this->assertEquals(300.00, $balances['Asset 2']);
+        $this->assertEquals(600.00, $balances['Asset 3']);
+
+        $balances = self::$assetCollection->getBalances(true);
+        $this->assertCount(3, $balances);
+        $this->assertEquals('$300.00', $balances['Asset 1']);
+        $this->assertEquals('$300.00', $balances['Asset 2']);
+        $this->assertEquals('$600.00', $balances['Asset 3']);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testActivateAssets1(): void
+    {
+        self::$assetCollection->loadScenario('ut01-assets');
+        $period = new Period(2024, 1);
+
+        for ($i = 0; $i < 36; $i++) {
+            // Activate assets for current period
+            self::$assetCollection->activateAssets($period);
+            /** @var Asset[] $assets */
+            $assets = self::$assetCollection->getAssets();
+
+            // Test that it becomes active at the right time
+            if (($period->getYear() >= 2025) && ($period->getMonth() >= 1)) {
+                $this->assertEquals(true, $assets[0]->isActive());
+                $this->assertEquals(false, $assets[0]->isUntapped());
+            } else {
+                $this->assertEquals(false, $assets[0]->isActive());
+                $this->assertEquals(true, $assets[0]->isUntapped());
+            }
+
+            $period->advance();
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testActivateAssets2(): void
+    {
+        self::$assetCollection->loadScenario('ut02-assets');
+        $period = new Period(2024, 1);
+
+        for ($i = 0; $i < 36; $i++) {
+            // Activate assets for current period
+            self::$assetCollection->activateAssets($period);
+            /** @var Asset[] $assets */
+            $assets = self::$assetCollection->getAssets();
+
+            // Test that it never becomes active. Because asset #2
+            // is scheduled for activation only when asset #1 depletes,
+            // and we're not depleting asset #1 (yet)
+            $this->assertEquals(false, $assets[1]->isActive());
+            $this->assertEquals(true, $assets[1]->isUntapped());
+
+            $period->advance();
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testActivateAssets2b(): void
+    {
+        self::$assetCollection->loadScenario('ut02-assets');
+        $period = new Period(2024, 1);
+
+        for ($i = 0; $i < 24; $i++) {
+            // Activate assets for current period
+            self::$assetCollection->activateAssets($period);
+            /** @var Asset[] $assets */
+            $assets = self::$assetCollection->getAssets();
+
+            if ($assets[0]->currentBalance()->ge(100.00) && $assets[0]->isActive()) {
+                $assets[0]->decreaseCurrentBalance(100.00);
+            }
+
+            if (($period->getYear() >= 2025) && ($period->getMonth() >= 6)) {
+                $this->assertEquals(true, $assets[1]->isActive(), $assets[1]->name() . " is active in loop $i");
+            } else {
+                $this->assertEquals(true, $assets[1]->isUntapped(), $assets[1]->name() . " is untapped in loop $i");
+            }
+
+            $period->advance();
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testActivateAssets3(): void
+    {
+        self::$assetCollection->loadScenario('ut03-assets');
+        $period = new Period(2024, 1);
+
+        for ($i = 0; $i < 24; $i++) {
+            // Activate assets for current period
+            self::$assetCollection->activateAssets($period);
+            /** @var Asset[] $assets */
+            $assets = self::$assetCollection->getAssets();
+
+            if ($assets[0]->currentBalance()->ge(100.00) && ($assets[0]->isActive())) {
+                $assets[0]->decreaseCurrentBalance(100.00);
+            }
+
+            if ($assets[1]->currentBalance()->ge(100.00) && ($assets[1]->isActive())) {
+                $assets[1]->decreaseCurrentBalance(100.00);
+            }
+
+            if (($period->getYear() >= 2025) && ($period->getMonth() >= 7)) {
+                $this->assertEquals(true, $assets[2]->isActive(), $assets[2]->name() . " is active in loop $i");
+            } else {
+                $this->assertEquals(true, $assets[2]->isUntapped(), $assets[2]->name() . " is untapped in loop $i");
+            }
+
+            $period->advance();
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testActivateAssets4(): void
+    {
+        self::$assetCollection->loadScenario('ut04-assets');
+        $period = new Period(2025, 1);
+
+        /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        /** @var Asset $asset1 */
-        $asset1 = $assets[0];
-        $this->assertEquals(990.00, $asset1->currentBalance()->value());
+        // Did we get them all?
+        $this->assertCount(3, $assets);
 
-        /** @var Asset $asset2 */
-        $asset2 = $assets[1];
-        $this->assertEquals(1960.00, $asset2->currentBalance()->value());
+        // Are they all untapped by default?
+        foreach ($assets as $asset) {
+            $this->assertEquals(true, $asset->isUntapped());
+        }
 
-        /** @var Asset $asset3 */
-        $asset3 = $assets[2];
-        $this->assertEquals(750.00, $asset3->currentBalance()->value());
-
-        //-------------------------
-
-        $period->advance();
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense);
-        $this->assertEquals($expected, $actual);
-
-        /** @var Asset $asset1 */
-        $asset1 = $assets[0];
-        $this->assertEquals(980.00, $asset1->currentBalance()->value());
-
-        /** @var Asset $asset2 */
-        $asset2 = $assets[1];
-        $this->assertEquals(1920.00, $asset2->currentBalance()->value());
-
-        /** @var Asset $asset3 */
-        $asset3 = $assets[2];
-        $this->assertEquals(750.00, $asset3->currentBalance()->value());
-
-        //-------------------------
-
-        $period->advance();
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense);
-        $this->assertEquals($expected, $actual);
-
-        /** @var Asset $asset1 */
-        $asset1 = $assets[0];
-        $this->assertEquals(970.00, $asset1->currentBalance()->value());
-
-        /** @var Asset $asset2 */
-        $asset2 = $assets[1];
-        $this->assertEquals(1880.00, $asset2->currentBalance()->value());
-
-        /** @var Asset $asset3 */
-        $asset3 = $assets[2];
-        $this->assertEquals(750.00, $asset3->currentBalance()->value());
-    }
-
-    public function testMakeWithdrawals2(): void
-    {
-        self::$assetCollection->loadScenarioFromMemory('scenario2', self::$scenarios);
-
-        $period = new Period(2026, 1);
-        $expense = new Money(50.00);
-        $expected = new Money(20.00);
-
+        // Activate assets for current period
         self::$assetCollection->activateAssets($period);
 
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense);
-        $this->assertEquals($expected, $actual, '$50.00 is too much for scenario2');
+        // Ensure they're all active
+        foreach ($assets as $asset) {
+            $this->assertEquals(false, $asset->isUntapped());
+        }
 
-        $assets = self::$assetCollection->getAssets();
-
-        /** @var Asset $asset1 */
-        $asset1 = $assets[0];
-        $this->assertEquals(10.00, $asset1->currentBalance()->value());
-
-        /** @var Asset $asset2 */
-        $asset3 = $assets[2];
-        $this->assertEquals(0.00, $asset3->currentBalance()->value());
-
-        //-------------------------
-
-        $period->advance();
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense);
-        $expected = new Money(50.00);
-        $this->assertEquals($expected, $actual);
-
-        /** @var Asset $asset1 */
-        $asset1 = $assets[0];
-        $this->assertEquals(0.00, $asset1->currentBalance()->value());
-
-        /** @var Asset $asset2 */
-        $asset2 = $assets[1];
-        $this->assertEquals(10.00, $asset2->currentBalance()->value());
-
-        /** @var Asset $asset3 */
-        $asset3 = $assets[2];
-        $this->assertEquals(0.00, $asset3->currentBalance()->value());
+        $balances = self::$assetCollection->getBalances();
+        $this->assertEquals(1000.00, $balances['Asset 1']);
+        $this->assertEquals(2000.00, $balances['Asset 2']);
+        $this->assertEquals(3000.00, $balances['Asset 3']);
     }
 
-    public function testMakeWithdrawals3(): void
-    {
-        self::$assetCollection->loadScenarioFromMemory('scenario3', self::$scenarios);
-
-        $period = new Period(2026, 1);
-        $expense = new Money(50.00);
-        $expected = new Money(20.00);
-
-        self::$assetCollection->activateAssets($period);
-
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense);
-        $this->assertEquals($expected, $actual, '$50.00 cannot be drawn for scenario3');
-
-        $assets = self::$assetCollection->getAssets();
-
-        /** @var Asset $asset1 */
-        $asset1 = $assets[0];
-        $this->assertEquals(10.00, $asset1->currentBalance()->value());
-
-        /** @var Asset $asset1 */
-        $asset2 = $assets[1];
-        $this->assertEquals(50.00, $asset2->currentBalance()->value());
-
-        /** @var Asset $asset2 */
-        $asset3 = $assets[2];
-        $this->assertEquals(0.00, $asset3->currentBalance()->value());
-
-        /** @var Asset $asset2 */
-        $asset4 = $assets[3];
-        $this->assertEquals(200.00, $asset4->currentBalance()->value());
-
-        //-------------------------
-
-        $period->advance(); // move to period 2026-02
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense);
-        $expected = new Money(50.00);
-        $this->assertEquals($expected, $actual);
-
-        $period->advance(); // move to period 2026-03
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense);
-        $expected = new Money(10.00);
-        $this->assertEquals($expected, $actual);
-
-        $period->advance(); // move to period 2026-04
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense);
-        $expected = new Money(0.00);
-        $this->assertEquals($expected, $actual);
-
-        $period->advance(); // move to period 2026-05
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense);
-        $expected = new Money(0.00);
-        $this->assertEquals($expected, $actual);
-
-        $period->advance(); // move to period 2026-06
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense);
-        $expected = new Money(50.00);
-        $this->assertEquals($expected, $actual);
-
-        /** @var Asset $asset1 */
-        $asset1 = $assets[0];
-        $this->assertEquals(0.00, $asset1->currentBalance()->value());
-
-        /** @var Asset $asset2 */
-        $asset2 = $assets[1];
-        $this->assertEquals(0.00, $asset2->currentBalance()->value());
-
-        /** @var Asset $asset3 */
-        $asset3 = $assets[2];
-        $this->assertEquals(0.00, $asset3->currentBalance()->value());
-
-        /** @var Asset $asset3 */
-        $asset4 = $assets[3];
-        $this->assertEquals(150.00, $asset4->currentBalance()->value());
-    }
-
+    /**
+     * @throws Exception
+     */
     public function testEarnInterest(): void
     {
-        $this->assertEquals(1, 1);
+        self::$assetCollection->loadScenario('ut04-assets');
+        $period = new Period(2025, 1);
+
+        // Activate assets for current period
+        self::$assetCollection->activateAssets($period);
+
+        // Earn interest
+        self::$assetCollection->earnInterest();
+
+        // Check interest calculations successful
+        $balances = self::$assetCollection->getBalances();
+        $this->assertEquals(1001.67, $balances['Asset 1']);
+        $this->assertEquals(2008.33, $balances['Asset 2']);
+        $this->assertEquals(3025.00, $balances['Asset 3']);
+
+        // Earn interest (again)
+        self::$assetCollection->earnInterest();
+
+        // Check interest calculations successful
+        $balances = self::$assetCollection->getBalances();
+        $this->assertEquals(1003.34, $balances['Asset 1']);
+        $this->assertEquals(2016.70, $balances['Asset 2']);
+        $this->assertEquals(3050.21, $balances['Asset 3']);
+
+        // While I'm here, let's sneak in an audit check
+        $audit = self::$assetCollection->auditAssets($period);
+        $this->assertEquals(1, $audit[0]['period']);
+        $this->assertEquals(2025, $audit[0]['year']);
+        $this->assertEquals(1, $audit[0]['month']);
+        $this->assertEquals('Asset 1', $audit[0]['name']);
+        $this->assertEquals(1000.00, $audit[0]['opening_balance']);
+        $this->assertEquals(1003.34, $audit[0]['current_balance']);
+        $this->assertEquals(100.00, $audit[0]['max_withdrawal']);
+        $this->assertEquals('active', $audit[0]['status']);
+
+        $this->assertEquals(1, $audit[2]['period']);
+        $this->assertEquals(2025, $audit[2]['year']);
+        $this->assertEquals(1, $audit[2]['month']);
+        $this->assertEquals('Asset 3', $audit[2]['name']);
+        $this->assertEquals(3000.00, $audit[2]['opening_balance']);
+        $this->assertEquals(3050.21, $audit[2]['current_balance']);
+        $this->assertEquals(300.00, $audit[2]['max_withdrawal']);
+        $this->assertEquals('active', $audit[2]['status']);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testMakeWithdrawals(): void
+    {
+        self::$assetCollection->loadScenario('ut01-assets');
+
+        $period = new Period(2025, 1);
+        $expense = new Money(50.00);
+        $expected = new Money(50.00);
+        $agi = new Money(0.00);
+
+        self::$assetCollection->activateAssets($period);
+
+        //-------------------------
+
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(950.00, $assets[0]->currentBalance()->value());
+        // TODO: add $taxable flag to assets (e.g., Roth IRAs are not taxable)
+        $this->assertEquals(50.00, $agi->value());
+
+        //-------------------------
+
+        $period->advance();
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(900.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(100.00, $agi->value());
+
+        //-------------------------
+
+        $period->advance();
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(850.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(150.00, $agi->value());
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testMakeWithdrawals2(): void
+    {
+        self::$assetCollection->loadScenario('ut02-assets');
+
+        $period = new Period(2025, 1);
+        $expense = new Money(100.00);
+        $expected = new Money(100.00);
+        $agi = new Money(0.00);
+
+        self::$assetCollection->activateAssets($period);
+
+        //-------------------------
+
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(400.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals(100.00, $agi->value());
+
+        //-------------------------
+
+        $period->advance();
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(300.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals(200.00, $agi->value());
+
+        //-------------------------
+
+        $period->advance();
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(200.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals(300.00, $agi->value());
+
+        //-------------------------
+
+        $period->advance();
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(100.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals(400.00, $agi->value());
+
+        //-------------------------
+
+        $period->advance();
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(0.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals(500.00, $agi->value());
+
+        //-------------------------
+
+        $period->advance();
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(0.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(900.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals(600.00, $agi->value());
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testMakeWithdrawals3(): void
+    {
+        self::$assetCollection->loadScenario('ut03-assets');
+
+        $period = new Period(2025, 1);
+        $expense = new Money(500.00);
+        $agi = new Money(0.00);
+
+        self::$assetCollection->activateAssets($period);
+
+        //-------------------------
+
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $expected = new Money(100.00);
+        $this->assertEquals($expected, $actual);
+        $lastLog = $this->getLastLog();
+        $this->assertStringContainsString("Insufficient funds", $lastLog);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(200.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(300.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
+        $this->assertEquals(100.00, $agi->value());
+
+        //-------------------------
+
+        $period->advance();
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+        $lastLog = $this->getLastLog();
+        $this->assertStringContainsString("Insufficient funds", $lastLog);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(100.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(300.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
+        $this->assertEquals(200.00, $agi->value());
+
+        //-------------------------
+
+        $period->advance();
+        // In the third period, Asset 1 gets drained and Asset 2 kicks in
+        // So we pull $200 instead of $100, but that's still shy of the
+        // $500 needed for this month
+        $expected->assign(200.00);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+        $lastLog = $this->getLastLog();
+        $this->assertStringContainsString("Insufficient funds", $lastLog);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(  0.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(200.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
+        $this->assertEquals(400.00, $agi->value());
+
+        //-------------------------
+
+        $period->advance();
+        // In the fourth period, Asset 1 is drained and Asset 2 is still
+        // active. But we're back to only getting $100 total for the month
+        $expected->assign(100.00);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+        $lastLog = $this->getLastLog();
+        $this->assertStringContainsString("Insufficient funds", $lastLog);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(  0.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(100.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
+        $this->assertEquals(500.00, $agi->value());
+
+        //-------------------------
+
+        $period->advance();
+        self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $period->advance();
+        self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $period->advance();
+        self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $period->advance();
+        self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $period->advance();
+        // Skipping ahead to the ninth period...
+        $expected->assign(100.00);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+        $lastLog = $this->getLastLog();
+        $this->assertStringContainsString("Insufficient funds", $lastLog);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals(   0.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(   0.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals( 100.00, $assets[2]->currentBalance()->value());
+        $this->assertEquals(1100.00, $agi->value());
+    }
+
+    /**
+     * This is the first "realistic" test: $500 a month
+     * pulling from plenty of asset sources simultaneously
+     * @throws Exception
+     */
+    public function testMakeWithdrawals4(): void
+    {
+        self::$assetCollection->loadScenario('ut04-assets');
+
+        $period = new Period(2025, 1);
+        $expense = new Money(500.00);
+        $expected = new Money(500.00);
+        $agi = new Money(0.00);
+
+        self::$assetCollection->activateAssets($period);
+
+        //-------------------------
+
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $this->assertEquals($expected, $actual);
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals( 900.00, $assets[0]->currentBalance()->value());
+        $this->assertEquals(1800.00, $assets[1]->currentBalance()->value());
+        $this->assertEquals(2800.00, $assets[2]->currentBalance()->value());
+        $this->assertEquals( 500.00, $agi->value());
+
+        self::$assetCollection->earnInterest();
+
+        /** @var Asset[] $assets */
+        $assets = self::$assetCollection->getAssets();
+
+        $this->assertEquals( 901.50, $assets[0]->currentBalance()->value());
+        $this->assertEquals(1807.50, $assets[1]->currentBalance()->value());
+        $this->assertEquals(2823.33, $assets[2]->currentBalance()->value());
+    }
+
+    /**
+     * @return string
+     */
+    private function getLastLog(): string
+    {
+        $logs = self::$assetCollection->getLog()->getLogs();
+        return $logs[count($logs) - 1];
     }
 
 }

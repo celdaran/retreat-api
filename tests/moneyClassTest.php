@@ -84,5 +84,20 @@ final class moneyClassTest extends TestCase
         $b->assign(10.005);
 
         $this->assertEquals(false, $a->eq($b->value()));
+
+        $a->assign(5);
+        $b->assign(6);
+
+        $this->assertEquals(true, $a->le($b->value()));
+
+        $a->assign(5);
+        $b->assign(5);
+
+        $this->assertEquals(true, $a->le($b->value()));
+
+        $a->assign(6);
+        $b->assign(5);
+
+        $this->assertEquals(false, $a->le($b->value()));
     }
 }

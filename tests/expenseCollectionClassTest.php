@@ -2,113 +2,176 @@
 
 use PHPUnit\Framework\TestCase;
 
-use App\Service\Data\ExpenseCollection;
-use App\Service\Engine\Period;
+use App\System\Log;
+use App\System\LogFactory;
+use App\Service\Scenario\ExpenseCollection;
 use App\Service\Engine\Expense;
+use App\Service\Engine\Period;
+use App\Service\Engine\Money;
 
 final class expenseCollectionClassTest extends TestCase
 {
     private static ExpenseCollection $expenseCollection;
-    private static array $scenarios;
+    private static Log $log;
 
     public static function setUpBeforeClass(): void
     {
-        self::$expenseCollection = new ExpenseCollection();
-
-        self::$scenarios = [
-            'scenario1' => [
-                [
-                    'expense_name' => 'expense number 1',
-                    'amount' => 100.00,
-                    'inflation_rate' => 0.000,
-                    'begin_year' => 2026,
-                    'begin_month' => 1,
-                    'end_year' => null,
-                    'end_month' => null,
-                    'repeat_every' => null,
-                ],
-                [
-                    'expense_name' => 'expense number 2',
-                    'amount' => 50.00,
-                    'inflation_rate' => 2.000,
-                    'begin_year' => 2026,
-                    'begin_month' => 2,
-                    'end_year' => null,
-                    'end_month' => null,
-                    'repeat_every' => null,
-                ],
-                [
-                    'expense_name' => 'expense number 3',
-                    'amount' => 25.00,
-                    'inflation_rate' => 3.000,
-                    'begin_year' => 2026,
-                    'begin_month' => 3,
-                    'end_year' => null,
-                    'end_month' => null,
-                    'repeat_every' => null,
-                ],
-            ],
-
-            'scenario2' => [
-                [
-                    'expense_name' => 'expense number 1',
-                    'amount' => 100.00,
-                    'inflation_rate' => 0.000,
-                    'begin_year' => 2026,
-                    'begin_month' => 1,
-                    'end_year' => null,
-                    'end_month' => null,
-                    'repeat_every' => null,
-                ],
-                [
-                    'expense_name' => 'expense number 2',
-                    'amount' => 50.00,
-                    'inflation_rate' => 3.000,
-                    'begin_year' => 2026,
-                    'begin_month' => 1,
-                    'end_year' => null,
-                    'end_month' => null,
-                    'repeat_every' => null,
-                ],
-            ]
-        ];
+        self::$log = LogFactory::getLogger();
+        self::$expenseCollection = new ExpenseCollection(self::$log);
     }
 
+    /**
+     * @throws Exception
+     */
+    public function testCountNoExpenses(): void
+    {
+        $this->expectException(Exception::class);
+        self::$expenseCollection->loadScenario('no-such-scenario');
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testCount(): void
+    {
+        self::$expenseCollection->loadScenario('ut01-expenses');
+        $count = self::$expenseCollection->count();
+        $this->assertEquals(1, $count);
+
+        self::$expenseCollection->loadScenario('ut02-expenses');
+        $count = self::$expenseCollection->count();
+        $this->assertEquals(1, $count);
+
+        self::$expenseCollection->loadScenario('ut03-expenses');
+        $count = self::$expenseCollection->count();
+        $this->assertEquals(1, $count);
+
+        self::$expenseCollection->loadScenario('ut04-expenses');
+        $count = self::$expenseCollection->count();
+        $this->assertEquals(3, $count);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testInactiveAmounts(): void
+    {
+        self::$expenseCollection->loadScenario('ut04-expenses');
+        $amounts = self::$expenseCollection->getAmounts();
+        $this->assertNull($amounts['Expense 1']);
+        $this->assertNull($amounts['Expense 2']);
+        $this->assertNull($amounts['Expense 3']);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testActiveAmounts(): void
+    {
+        self::$expenseCollection->loadScenario('ut04-expenses');
+        /** @var Expense[] $expenses */
+        $expenses = self::$expenseCollection->getExpenses();
+
+        $expenses[0]->markActive();
+        $amounts = self::$expenseCollection->getAmounts();
+        $this->assertEquals(500.00, $amounts['Expense 1']);
+        $this->assertNull($amounts['Expense 2']);
+        $this->assertNull($amounts['Expense 3']);
+
+        $expenses[1]->markActive();
+        $amounts = self::$expenseCollection->getAmounts();
+        $this->assertEquals(500.00, $amounts['Expense 1']);
+        $this->assertEquals(600.00, $amounts['Expense 2']);
+        $this->assertNull($amounts['Expense 3']);
+
+        $expenses[2]->markActive();
+        $amounts = self::$expenseCollection->getAmounts();
+        $this->assertEquals(500.00, $amounts['Expense 1']);
+        $this->assertEquals(600.00, $amounts['Expense 2']);
+        $this->assertEquals(700.00, $amounts['Expense 3']);
+    }
+
+    /**
+     * @throws Exception
+     */
     public function testTallyExpenses(): void
     {
-        self::$expenseCollection->loadScenarioFromMemory('scenario1', self::$scenarios);
+        self::$expenseCollection->loadScenario('ut04-expenses');
+        $period = new Period(2025, 1);
 
-        $period = new Period(2026, 1);
-        $expenses = self::$expenseCollection->tallyExpenses($period);
-        $this->assertEquals(100.00, $expenses->value(), "scenario1, period 1");
+        /** @var Expense[] $expenses */
+        $expenses = self::$expenseCollection->getExpenses();
 
-        $period->advance();
-        $expenses = self::$expenseCollection->tallyExpenses($period);
-        $this->assertEquals(150.00, $expenses->value(), "scenario1, period 2");
+        $expenses[0]->markActive();
+        $expected = new Money(500.00);
+        $actual = self::$expenseCollection->tallyExpenses($period);
+        $this->assertEquals($expected, $actual);
 
-        $period->advance();
-        $expenses = self::$expenseCollection->tallyExpenses($period);
-        $this->assertEquals(175.00, $expenses->value(), "scenario1, period 3");
+        $expenses[1]->markActive();
+        $expected = new Money(1100.00);
+        $actual = self::$expenseCollection->tallyExpenses($period);
+        $this->assertEquals($expected, $actual);
+
+        $expenses[2]->markActive();
+        $expected = new Money(1800.00);
+        $actual = self::$expenseCollection->tallyExpenses($period);
+        $this->assertEquals($expected, $actual);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testApplyInflation(): void
     {
-        self::$expenseCollection->loadScenarioFromMemory('scenario1', self::$scenarios);
+        self::$expenseCollection->loadScenario('ut04-expenses');
+
+        /** @var Expense[] $expenses */
+        $expenses = self::$expenseCollection->getExpenses();
+        $expenses[0]->markActive();
+        $expenses[1]->markActive();
+        $expenses[2]->markActive();
 
         self::$expenseCollection->applyInflation();
 
+        $expected = new Money(500.00);
+        $this->assertEquals($expected, $expenses[0]->amount());
+        $expected = new Money(600.50);
+        $this->assertEquals($expected, $expenses[1]->amount());
+        $expected = new Money(702.92);
+        $this->assertEquals($expected, $expenses[2]->amount());
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function testClone(): void
+    {
+        self::$expenseCollection->loadScenario('ut04-expenses');
+
+        $scenarioId = self::$expenseCollection->id();
+        self::$expenseCollection->clone($scenarioId, 'ut04-expenses-clone', 'ut04-expenses-clone unit test', 1);
+
+        self::$expenseCollection->loadScenario('ut04-expenses-clone');
+
         $expenses = self::$expenseCollection->getExpenses();
 
-        /** @var Expense $expense1 */
-        $expense1 = $expenses[0];
-        /** @var Expense $expense2 */
-        $expense2 = $expenses[1];
-        /** @var Expense $expense3 */
-        $expense3 = $expenses[2];
+        $expected = new Money(500.00);
+        $this->assertEquals($expected, $expenses[0]->amount());
+        $expected = new Money(600.00);
+        $this->assertEquals($expected, $expenses[1]->amount());
+        $expected = new Money(700.00);
+        $this->assertEquals($expected, $expenses[2]->amount());
 
-        $this->assertEquals(100.00, $expense1->amount()->value());
-        $this->assertEquals(50.08, $expense2->amount()->value());
-        $this->assertEquals(25.06, $expense3->amount()->value());
+        self::$expenseCollection->delete();
+    }
+
+    /**
+     * @return string
+     */
+    private function getLastLog(): string
+    {
+        $logs = self::$expenseCollection->getLog()->getLogs();
+        return $logs[count($logs) - 1];
     }
 
 }
