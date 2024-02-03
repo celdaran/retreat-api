@@ -11,6 +11,11 @@ class Database
     private array $lastError;
     private Log $log;
 
+    private string $host;
+    private string $name;
+    private string $user;
+    private string $pass;
+
     public function __construct(Log $log)
     {
         $this->dbh = null;
@@ -24,6 +29,10 @@ class Database
         try {
             if ($this->dbh === null) {
                 $this->dbh = new PDO("mysql:host=$host;dbname=$database", $username, $password);
+                $this->host = $host;
+                $this->name = $database;
+                $this->user = $username;
+                $this->pass = $password;
             }
         } catch (PDOException $e) {
             $this->log->error("Error connecting to database: " . $e->getMessage() . "\n");
@@ -43,6 +52,26 @@ class Database
         $this->lastInsertId = $this->dbh->lastInsertId();
         $this->lastError = $sth->errorInfo();
         return $sth;
+    }
+
+    public function getHost(): string
+    {
+        return $this->host;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getUser(): string
+    {
+        return $this->user;
+    }
+
+    public function getPass(): string
+    {
+        return $this->pass;
     }
 
     public function lastInsertId(): int

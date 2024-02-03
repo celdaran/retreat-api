@@ -1,7 +1,7 @@
 <?php namespace App\System;
 
-
-use App\System\Database;
+use Exception;
+use Ifsnop\Mysqldump;
 
 /**
  * For unit testing only!
@@ -17,9 +17,23 @@ class DatabaseReset
 
     public function reset()
     {
+        $this->_saveDatabase();
         $this->_dropTables();
         $this->_createTables();
         $this->_hydrate(true);
+    }
+
+    private function _saveDatabase()
+    {
+        try {
+            $dsn = sprintf('mysql:host=%s;dbname=%s', $this->db->getHost(), $this->db->getName());
+            $dump = new Mysqldump\Mysqldump($dsn, $this->db->getUser(), $this->db->getPass());
+            $dump->start($this->db->getName() . '.' . date('Ymd-His') . '.sql');
+        }
+        catch (Exception $e) {
+            echo "mysqldump error: " . $e->getMessage() . "\n";
+            exit;
+        }
     }
 
     private function _dropTables()
