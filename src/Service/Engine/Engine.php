@@ -74,6 +74,12 @@ class Engine
         $this->assetCollection->loadScenario($this->assetScenarioName);
         $this->earningsCollection->loadScenario($this->earningsScenarioName);
 
+        if ($this->assetCollection->count() === 0 && $this->earningsCollection->count() === 0) {
+            $msg = "No income sources found. Must specify assets, earnings or both.";
+            $this->log->error($msg);
+            throw new Exception($msg);
+        }
+
         // Track period (year and month)
         $this->currentPeriod = $this->expenseCollection->getStart($startYear, $startMonth);
 

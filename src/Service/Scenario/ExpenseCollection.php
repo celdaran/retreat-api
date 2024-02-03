@@ -171,7 +171,7 @@ class ExpenseCollection extends Scenario
         /** @var Expense $expense */
         foreach ($this->expenses as $expense) {
             $interest = Util::calculateInterest($expense->amount()->value(), $expense->inflationRate());
-            $expense->increaseAmount($interest);
+            $expense->increaseAmount($interest->value());
         }
     }
 

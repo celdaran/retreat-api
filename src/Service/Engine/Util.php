@@ -5,8 +5,9 @@ class Util
 
     /**
      * Calculate compound interest
+     * @return Money
      */
-    public static function calculateInterest(float $p, float $r): float
+    public static function calculateInterest(float $p, float $r): Money
     {
         // Convert rate
         $r = $r / 100;
@@ -18,7 +19,7 @@ class Util
         $v = $p * (1 + $r / 12) ** (12 * $t);
 
         // Return *just* the interest
-        return round($v - $p, 2);
+        return new Money(round($v - $p, 2));
     }
 
     /**

@@ -1,11 +1,12 @@
 <?php namespace App\Service\Engine;
 
+use PHPUnit\Util\Exception;
+
 /**
  * A class representing an asset
  */
 class Asset
 {
-
     const UNTAPPED = 0;
     const ACTIVE = 1;
     const DEPLETED = 9;
@@ -23,6 +24,7 @@ class Asset
 
     public function __construct()
     {
+        $this->status = self::UNTAPPED;
     }
 
     //--------------------------------------------
@@ -56,6 +58,24 @@ class Asset
     public function increaseCurrentBalance(float $amount): Asset
     {
         $this->currentBalance->add($amount);
+        return $this;
+    }
+
+    public function decreaseCurrentBalance(float $amount): Asset
+    {
+        // Cannot decrease balance of a non-active asset
+        if (!$this->isActive()) {
+            throw new Exception("decreaseCurrentBalance: asset is not active");
+        }
+
+        // Subtract
+        $this->currentBalance->subtract($amount);
+        if ($this->currentBalance()->eq(0.00)) {
+            $this->markDepleted();
+        } elseif ($this->currentBalance()->lt(0.00)) {
+            throw new Exception("decreaseCurrentBalance: asset balance is negative");
+        }
+
         return $this;
     }
 
@@ -95,14 +115,12 @@ class Asset
         return $this;
     }
 
-    /* potential replacement for above */
     public function markActive(): Asset
     {
         $this->status = self::ACTIVE;
         return $this;
     }
 
-    /* potential replacement for above */
     public function markDepleted(): Asset
     {
         $this->status = self::DEPLETED;

@@ -20,11 +20,17 @@ class AssetCollection extends Scenario
     public function loadScenario(string $scenarioName)
     {
         $rows = parent::getRowsForScenario($scenarioName, 'asset', $this->fetchQuery());
-        if (count($rows) === 0) {
-            $this->getLog()->error("No assets found for scenario $scenarioName");
-            throw new Exception("No assets found for scenario $scenarioName");
-        }
         $this->assets = $this->transform($rows);
+    }
+
+    public function count(): int
+    {
+        return count($this->assets);
+    }
+
+    public function getAssets(): array
+    {
+        return $this->assets;
     }
 
     public function auditAssets(Period $period): array
@@ -103,7 +109,7 @@ class AssetCollection extends Scenario
                     $total->add($amount->value());
 
                     // Reduce balance by withdrawal amount
-                    $asset->currentBalance()->subtract($amount->value());
+                    $asset->decreaseCurrentBalance($amount->value());
                 }
 
                 $annualIncome->add($amount->value());
@@ -131,7 +137,6 @@ class AssetCollection extends Scenario
                 $total->formatted(),
             );
             $this->getLog()->warn($msg);
-//            throw new Exception($msg);
         }
 
         return $total;
@@ -192,7 +197,7 @@ class AssetCollection extends Scenario
         foreach ($this->assets as $asset) {
             if ($asset->canEarnInterest()) {
                 $interest = Util::calculateInterest($asset->currentBalance()->value(), $asset->apr());
-                $asset->increaseCurrentBalance($interest);
+                $asset->increaseCurrentBalance($interest->value());
             }
         }
     }

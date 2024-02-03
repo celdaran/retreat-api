@@ -19,6 +19,11 @@ class EarningsCollection extends Scenario
         $this->earnings = $this->transform($rows);
     }
 
+    public function count(): int
+    {
+        return count($this->earnings);
+    }
+
     public function auditEarnings(Period $period): array
     {
         $audit = [];

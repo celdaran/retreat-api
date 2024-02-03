@@ -7,7 +7,6 @@
  */
 class Money
 {
-
     protected float $value;
 
     //--------------------------------------------
@@ -48,14 +47,24 @@ class Money
         return $this->r($this->value) === $this->r($n);
     }
 
-    public function lt(float $a, float $b): bool
+    public function lt(float $n): bool
     {
-        return $this->r($a) < $this->r($b);
+        return $this->r($this->value) < $this->r($n);
     }
 
     public function le(float $n): bool
     {
         return $this->r($this->value) <= $this->r($n);
+    }
+
+    public function gt(float $n): bool
+    {
+        return $this->r($this->value) > $this->r($n);
+    }
+
+    public function ge(float $n): bool
+    {
+        return $this->r($this->value) >= $this->r($n);
     }
 
     //--------------------------------------------
@@ -78,7 +87,7 @@ class Money
 
     public function formatted(): string
     {
-        return sprintf("%01.2f", $this->value);
+        return sprintf('$%01.2f', $this->value);
     }
 
 }
