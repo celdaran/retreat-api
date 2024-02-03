@@ -26,6 +26,7 @@ class Asset
     public function __construct()
     {
         $this->status = self::UNTAPPED;
+        $this->taxable = true;
     }
 
     //--------------------------------------------

@@ -22,6 +22,7 @@ class Expense
 
     public function __construct()
     {
+        $this->status = self::PLANNED;
     }
 
     //--------------------------------------------

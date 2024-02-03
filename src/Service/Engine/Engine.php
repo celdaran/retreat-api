@@ -207,6 +207,7 @@ class Engine
     private function getEarningsForPeriod(): Money
     {
         $earnings = $this->earningsCollection->tallyEarnings($this->currentPeriod);
+        $this->earningsCollection->applyInflation();
         $this->annualIncome->add($earnings->value());
         $this->log->debug("Increasing annualIncome by amount: " . $earnings->formatted());
         return $earnings;
