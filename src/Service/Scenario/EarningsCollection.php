@@ -1,8 +1,11 @@
 <?php namespace App\Service\Scenario;
 
+use Exception;
+
 use App\Service\Engine\Earnings;
 use App\Service\Engine\Money;
 use App\Service\Engine\Period;
+use App\Service\Engine\Util;
 
 class EarningsCollection extends Scenario
 {
@@ -12,16 +15,38 @@ class EarningsCollection extends Scenario
      * Load a scenario
      *
      * @param string $scenarioName
+     * @throws Exception
      */
     public function loadScenario(string $scenarioName)
     {
+        // Set scenario name
+        $this->scenarioId = parent::fetchScenarioId($scenarioName, 3);
+        $this->scenarioName = $scenarioName;
+        $this->scenarioTable = 'earnings';
+
+        // Fetch data and validate
         $rows = parent::getRowsForScenario($scenarioName, 'earnings', $this->fetchQuery());
+
+        // Assign data to expenses
         $this->earnings = $this->transform($rows);
     }
 
+    /**
+     * Return the number of loaded expenses
+     * @return int
+     */
     public function count(): int
     {
         return count($this->earnings);
+    }
+
+    /**
+     * Return array of earnings
+     * @return array
+     */
+    public function getEarnings(): array
+    {
+        return $this->earnings;
     }
 
     public function auditEarnings(Period $period): array
@@ -109,15 +134,6 @@ class EarningsCollection extends Scenario
         return $total;
     }
 
-//    public function applyInflation()
-//    {
-//        /** @var Earnings $earnings */
-//        foreach ($this->earnings as $earnings) {
-//            $interest = Util::calculateInterest($earnings->amount()->value(), $earnings->inflationRate());
-//            $earnings->increaseAmount($interest);
-//        }
-//    }
-
     public function getAmounts(bool $formatted = false): array
     {
         $amounts = [];
@@ -134,6 +150,15 @@ class EarningsCollection extends Scenario
             }
         }
         return $amounts;
+    }
+
+    public function applyInflation()
+    {
+        /** @var Earnings $earnings */
+        foreach ($this->earnings as $earnings) {
+            $interest = Util::calculateInterest($earnings->amount()->value(), $earnings->inflationRate());
+            $earnings->increaseAmount($interest->value());
+        }
     }
 
     /**

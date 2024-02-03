@@ -1,6 +1,7 @@
 <?php namespace App\Service\Scenario;
 
 use Exception;
+
 use App\Service\Engine\Expense;
 use App\Service\Engine\Money;
 use App\Service\Engine\Period;
@@ -8,7 +9,6 @@ use App\Service\Engine\Util;
 
 class ExpenseCollection extends Scenario
 {
-    private string $scenarioName;
     private array $expenses = [];
 
     /**
@@ -19,31 +19,38 @@ class ExpenseCollection extends Scenario
      */
     public function loadScenario(string $scenarioName)
     {
+        // Set scenario name
+        $this->scenarioId = parent::fetchScenarioId($scenarioName, 1);
         $this->scenarioName = $scenarioName;
+        $this->scenarioTable = 'expense';
+
+        // Fetch data and validate
         $rows = parent::getRowsForScenario($scenarioName, 'expense', $this->fetchQuery());
         if (count($rows) === 0) {
             $this->getLog()->error("No expenses found for scenario $scenarioName");
             throw new Exception("No expenses found for scenario $scenarioName");
         }
+
+        // Assign data to expenses
         $this->expenses = $this->transform($rows);
     }
 
-    public function getAmounts(bool $formatted = false): array
+    /**
+     * Return the number of loaded expenses
+     * @return int
+     */
+    public function count(): int
     {
-        $amounts = [];
-        /** @var Expense $expense */
-        foreach ($this->expenses as $expense) {
-            if ($expense->isActive()) {
-                $amounts[$expense->name()] = $formatted ?
-                    $expense->amount()->formatted() :
-                    $expense->amount()->value();
-            } else {
-                $amounts[$expense->name()] = $formatted ?
-                    'Inactive' :
-                    null;
-            }
-        }
-        return $amounts;
+        return count($this->expenses);
+    }
+
+    /**
+     * Return array of expenses
+     * @return array
+     */
+    public function getExpenses(): array
+    {
+        return $this->expenses;
     }
 
     public function auditExpenses(Period $period): array
@@ -63,41 +70,6 @@ class ExpenseCollection extends Scenario
         }
 
         return $audit;
-    }
-
-    /**
-     * Fetch initial period from database based on year and month
-     *
-     * @param int|null $startYear
-     * @param int|null $startMonth
-     * @return Period
-     */
-    public function getStart(?int $startYear, ?int $startMonth): Period
-    {
-        if ($startYear === null) {
-            $sql = "
-                SELECT min(e.begin_year) AS startYear 
-                FROM expense e
-                JOIN scenario s ON s.scenario_id = e.scenario_id
-                WHERE s.scenario_name = :scenario_name";
-            $rows = $this->getData()->select($sql, ['scenario_name' => $this->scenarioName]);
-            $startYear = $rows[0]['startYear'];
-        }
-
-        if ($startMonth === null) {
-            $sql = "
-                SELECT min(e.begin_month) AS startMonth
-                FROM expense e
-                JOIN scenario s ON s.scenario_id = e.scenario_id
-                WHERE s.scenario_name = :scenario_name
-                  AND e.begin_year = :begin_year
-            ";
-            $rows = $this->getData()->select($sql,
-                ['scenario_name' => $this->scenarioName, 'begin_year' => $startYear]);
-            $startMonth = $rows[0]['startMonth'];
-        }
-
-        return new Period($startYear, $startMonth);
     }
 
     public function tallyExpenses(Period $period): Money
@@ -154,7 +126,8 @@ class ExpenseCollection extends Scenario
                         $expense->repeatEvery(),
                     );
                     $this->getLog()->debug($msg);
-                    $nextPeriod = $period->addMonths($expense->beginYear(), $expense->beginMonth(),
+                    $nextPeriod = $period->addMonths(
+                        $expense->beginYear(), $expense->beginMonth(),
                         $expense->repeatEvery());
                     $expense->markPlanned();
                     $expense->setBeginYear($nextPeriod->getYear());
@@ -166,6 +139,24 @@ class ExpenseCollection extends Scenario
         return $total;
     }
 
+    public function getAmounts(bool $formatted = false): array
+    {
+        $amounts = [];
+        /** @var Expense $expense */
+        foreach ($this->expenses as $expense) {
+            if ($expense->isActive()) {
+                $amounts[$expense->name()] = $formatted ?
+                    $expense->amount()->formatted() :
+                    $expense->amount()->value();
+            } else {
+                $amounts[$expense->name()] = $formatted ?
+                    'Inactive' :
+                    null;
+            }
+        }
+        return $amounts;
+    }
+
     public function applyInflation()
     {
         /** @var Expense $expense */
@@ -174,6 +165,42 @@ class ExpenseCollection extends Scenario
             $expense->increaseAmount($interest->value());
         }
     }
+
+    /**
+     * Fetch initial period from database based on year and month
+     *
+     * @param int|null $startYear
+     * @param int|null $startMonth
+     * @return Period
+     */
+    public function getStart(?int $startYear, ?int $startMonth): Period
+    {
+        if ($startYear === null) {
+            $sql = "
+                SELECT min(e.begin_year) AS startYear 
+                FROM expense e
+                JOIN scenario s ON s.scenario_id = e.scenario_id
+                WHERE s.scenario_name = :scenario_name";
+            $rows = $this->getData()->select($sql, ['scenario_name' => $this->scenarioName]);
+            $startYear = $rows[0]['startYear'];
+        }
+
+        if ($startMonth === null) {
+            $sql = "
+                SELECT min(e.begin_month) AS startMonth
+                FROM expense e
+                JOIN scenario s ON s.scenario_id = e.scenario_id
+                WHERE s.scenario_name = :scenario_name
+                  AND e.begin_year = :begin_year
+            ";
+            $rows = $this->getData()->select($sql,
+                ['scenario_name' => $this->scenarioName, 'begin_year' => $startYear]);
+            $startMonth = $rows[0]['startMonth'];
+        }
+
+        return new Period($startYear, $startMonth);
+    }
+
 
     /**
      * Return SQL required to fetch a scenario from the database

@@ -19,16 +19,32 @@ class AssetCollection extends Scenario
      */
     public function loadScenario(string $scenarioName)
     {
+        // Set scenario name
+        $this->scenarioId = parent::fetchScenarioId($scenarioName, 2);
+        $this->scenarioName = $scenarioName;
+        $this->scenarioTable = 'asset';
+
+        // Fetch data and validate
         $rows = parent::getRowsForScenario($scenarioName, 'asset', $this->fetchQuery());
+
+        // Assign data to expenses
         $this->assets = $this->transform($rows);
     }
 
+    /**
+     * Return the number of loaded assets
+     * @return int
+     */
     public function count(): int
     {
         return count($this->assets);
     }
 
-    public function getAssets(): array
+    /**
+     * Return array of assets
+     * @return array
+     */
+    public function getExpenses(): array
     {
         return $this->assets;
     }
@@ -223,6 +239,12 @@ class AssetCollection extends Scenario
         return file_get_contents(__DIR__ . '/../../Resources/SQL/asset-query.sql');
     }
 
+    /**
+     * Transform fetched-rows into an array of objects
+     *
+     * @param array $rows
+     * @return array
+     */
     private function transform(array $rows): array
     {
         $collection = [];
