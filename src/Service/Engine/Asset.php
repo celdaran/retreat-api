@@ -17,6 +17,7 @@ class Asset
     protected Money $currentBalance;
     protected Money $maxWithdrawal;
     protected float $apr;
+    protected bool $taxable;
     protected ?int $beginAfter;
     protected ?int $beginYear;
     protected ?int $beginMonth;
@@ -91,6 +92,12 @@ class Asset
         return $this;
     }
 
+    public function setTaxable(bool $taxable): Asset
+    {
+        $this->taxable = $taxable;
+        return $this;
+    }
+
     public function setBeginAfter(?int $beginAfter): Asset
     {
         $this->beginAfter = $beginAfter;
@@ -160,6 +167,11 @@ class Asset
     public function apr(): float
     {
         return $this->apr;
+    }
+
+    public function taxable(): bool
+    {
+        return $this->taxable;
     }
 
     public function beginAfter(): ?int

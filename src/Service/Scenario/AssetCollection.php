@@ -112,8 +112,12 @@ class AssetCollection extends Scenario
                     $asset->decreaseCurrentBalance($amount->value());
                 }
 
-                $annualIncome->add($amount->value());
-                $this->getLog()->debug("Increasing annualIncome by amount: " . $amount->formatted());
+                if ($asset->taxable()) {
+                    $annualIncome->add($amount->value());
+                    $this->getLog()->debug("Increasing annualIncome by amount: " . $amount->formatted());
+                } else {
+                    $this->getLog()->debug("annualIncome not increased due to asset being non-taxable");
+                }
 
                 $msg = sprintf('Current balance of asset "%s" is %s',
                     $asset->name(),

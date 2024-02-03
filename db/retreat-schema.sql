@@ -39,6 +39,7 @@ CREATE TABLE `asset` (
   `opening_balance` DECIMAL(13, 2) NOT NULL,
   `max_withdrawal` DECIMAL(13, 2),
   `apr` DECIMAL(5, 3),
+  `taxable` bool,
   `begin_after` integer,
   `begin_year` integer,
   `begin_month` integer,
