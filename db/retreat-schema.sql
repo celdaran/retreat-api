@@ -18,7 +18,7 @@ CREATE TABLE `account_type` (
 CREATE TABLE `expense` (
   `expense_id` integer PRIMARY KEY NOT NULL AUTO_INCREMENT,
   `scenario_id` integer NOT NULL,
-  `expense_name` varchar(255) UNIQUE NOT NULL,
+  `expense_name` varchar(255) NOT NULL,
   `expense_descr` varchar(255),
   `amount` DECIMAL(13, 2) NOT NULL,
   `inflation_rate` DECIMAL(5, 3) NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE `expense` (
 CREATE TABLE `asset` (
   `asset_id` integer PRIMARY KEY NOT NULL AUTO_INCREMENT,
   `scenario_id` integer NOT NULL,
-  `asset_name` varchar(255) UNIQUE NOT NULL,
+  `asset_name` varchar(255) NOT NULL,
   `asset_descr` varchar(255),
   `opening_balance` DECIMAL(13, 2) NOT NULL,
   `max_withdrawal` DECIMAL(13, 2),
@@ -49,7 +49,7 @@ CREATE TABLE `asset` (
 CREATE TABLE `earnings` (
   `earnings_id` integer PRIMARY KEY NOT NULL AUTO_INCREMENT,
   `scenario_id` integer NOT NULL,
-  `earnings_name` varchar(255) UNIQUE NOT NULL,
+  `earnings_name` varchar(255) NOT NULL,
   `earnings_descr` varchar(255),
   `amount` DECIMAL(13, 2) NOT NULL,
   `inflation_rate` DECIMAL(5, 3),
@@ -77,6 +77,12 @@ CREATE TABLE `simulation` (
 );
 
 CREATE UNIQUE INDEX `scenario_index_0` ON `scenario` (`scenario_name`, `account_type_id`);
+
+CREATE UNIQUE INDEX `expense_index_1` ON `expense` (`expense_name`, `scenario_id`);
+
+CREATE UNIQUE INDEX `asset_index_2` ON `asset` (`asset_name`, `scenario_id`);
+
+CREATE UNIQUE INDEX `earnings_index_3` ON `earnings` (`earnings_name`, `scenario_id`);
 
 ALTER TABLE `scenario` ADD FOREIGN KEY (`account_type_id`) REFERENCES `account_type` (`account_type_id`);
 
