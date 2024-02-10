@@ -230,7 +230,6 @@ class Engine
     private function adjustAssetForPeriod(Money $expense, Money $earnings): Money
     {
         $shortfall = new Money();
-        $total = new Money();
 
         // If earnings don't cover expenses, then we need to
         // dip into our assets. Skip over this if earnings are
@@ -238,19 +237,15 @@ class Engine
         if ($earnings->le($expense->value())) {
             $shortfall->assign($expense->value());
             $shortfall->subtract($earnings->value());
-            $total = $this->assetCollection->makeWithdrawals($this->currentPeriod, $shortfall, $this->annualIncome);
+            $withdrawals = $this->assetCollection->makeWithdrawals($this->currentPeriod, $shortfall, $this->annualIncome);
+        } else {
+            $withdrawals = new Money();
         }
 
         // Assets gain value at the end of each period
         $this->assetCollection->earnInterest();
 
-        if ($total->value() < $shortfall->value()) {
-            // If we couldn't get enough assets to meet expenses, then
-            // reduce expenses to meet the available assets
-            // Why!?
-            $expense->assign($total->value());
-        } else {
-            // If we did, then our expenses are covered
+        if ($withdrawals->value() >= $shortfall->value()) {
             $shortfall->assign(0.00);
         }
 
