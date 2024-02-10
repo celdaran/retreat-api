@@ -44,7 +44,7 @@ class AssetCollection extends Scenario
      * Return array of assets
      * @return array
      */
-    public function getExpenses(): array
+    public function getAssets(): array
     {
         return $this->assets;
     }
