@@ -59,10 +59,20 @@ class Expense
         return $this;
     }
 
+    public function getBeginYear(): ?int
+    {
+        return $this->beginYear;
+    }
+
     public function setBeginMonth(?int $beginMonth): Expense
     {
         $this->beginMonth = $beginMonth;
         return $this;
+    }
+
+    public function getBeginMonth(): ?int
+    {
+        return $this->beginMonth;
     }
 
     public function setEndYear(?int $endYear): Expense
@@ -71,10 +81,20 @@ class Expense
         return $this;
     }
 
+    public function getEndYear(): ?int
+    {
+        return $this->endYear;
+    }
+
     public function setEndMonth(?int $endMonth): Expense
     {
         $this->endMonth = $endMonth;
         return $this;
+    }
+
+    public function getEndMonth(): ?int
+    {
+        return $this->endMonth;
     }
 
     public function setRepeatEvery(?int $repeatEvery): Expense
@@ -155,6 +175,11 @@ class Expense
         return $this->status === self::ACTIVE;
     }
 
+    public function isEnded(): bool
+    {
+        return $this->status === self::ENDED;
+    }
+
     public function status(): string
     {
         return match ($this->status) {
@@ -213,4 +238,35 @@ class Expense
         return 'nope';
     }
 
+    public function reschedule()
+    {
+        // Can't reschedule something that's over
+        if ($this->isEnded()) {
+            return;
+        }
+
+        // Get next period
+        $period = new Period();
+        $nextPeriod = $period->addMonths(
+            $this->beginYear(), $this->beginMonth(),
+            $this->repeatEvery());
+
+        // Set new begin year and month
+        $this->setBeginYear($nextPeriod->getYear());
+        $this->setBeginMonth($nextPeriod->getMonth());
+
+        // Has the rescheduling expired?
+        $cmp = Util::periodCompare(
+            $this->getBeginYear(), $this->getBeginMonth(),
+            $this->getEndYear(), $this->getEndMonth(),
+        );
+
+        if ($cmp >= 0) {
+            // If so, end the expense
+            $this->markEnded();
+        } else {
+            // Otherwise revert to planning state
+            $this->markPlanned();
+        }
+    }
 }
