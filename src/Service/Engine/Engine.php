@@ -101,6 +101,20 @@ class Engine
                 $this->currentPeriod->getMonth(),
             ));
 
+            // Activate expenses and earnings
+            $this->expenseCollection->activateExpenses($this->currentPeriod);
+            $this->earningsCollection->activateEarnings($this->currentPeriod);
+
+            // Record start of month figures
+            $planEntry = [
+                'period' => $this->currentPeriod->getCurrentPeriod(),
+                'year' => $this->currentPeriod->getYear(),
+                'month' => $this->currentPeriod->getMonth(),
+                'expenses' => $this->expenseCollection->getAmounts(),
+                'earnings' => $this->earningsCollection->getAmounts(),
+                'assets' => $this->assetCollection->getBalances(),
+            ];
+
             $this->appendToAudit();
 
             // Start by tallying all expenses for period
@@ -118,17 +132,9 @@ class Engine
             // Deal with income taxes
             $this->payIncomeTax($expense);
 
-            // Lastly record the plan
-            $planEntry = [
-                'period' => $this->currentPeriod->getCurrentPeriod(),
-                'year' => $this->currentPeriod->getYear(),
-                'month' => $this->currentPeriod->getMonth(),
-                'expense' => $expense->value(),
-                'expenses' => $this->expenseCollection->getAmounts(),
-                'earnings' => $this->earningsCollection->getAmounts(),
-                'assets' => $this->assetCollection->getBalances(),
-                'shortfall' => $shortfall->value(),
-            ];
+            // Lastly amend the plan
+            $planEntry['expense'] = $expense->value();
+            $planEntry['shortfall'] = $shortfall->value();
             $this->plan[] = $planEntry;
 
             // Next period
