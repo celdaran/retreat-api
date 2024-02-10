@@ -4,6 +4,7 @@ use PHPUnit\Framework\TestCase;
 
 use App\Service\Engine\Expense;
 use App\Service\Engine\Period;
+use App\Service\Engine\Money;
 
 final class expenseClassTest extends TestCase
 {
@@ -97,5 +98,45 @@ final class expenseClassTest extends TestCase
             }
             $period->advance();
         }
+    }
+
+    public function testReschedule(): void
+    {
+        $expense = new Expense();
+        $expense
+            ->setName('Unit Test')
+            ->setAmount(new Money(100.00))
+            ->setInflationRate(0.000)
+            ->setBeginYear(2030)
+            ->setBeginMonth(8)
+            ->setEndYear(2040)
+            ->setEndMonth(7)
+            ->setRepeatEvery(39)
+            ->markPlanned();
+
+        $expense->reschedule();
+        $this->assertEquals(2033, $expense->getBeginYear());
+        $this->assertEquals(11, $expense->getBeginMonth());
+        $this->assertTrue($expense->isPlanned());
+
+        $expense->reschedule();
+        $this->assertEquals(2037, $expense->getBeginYear());
+        $this->assertEquals(2, $expense->getBeginMonth());
+        $this->assertTrue($expense->isPlanned());
+
+        $expense->reschedule();
+        $this->assertEquals(2040, $expense->getBeginYear());
+        $this->assertEquals(5, $expense->getBeginMonth());
+        $this->assertTrue($expense->isPlanned());
+
+        $expense->reschedule();
+        $this->assertEquals(2043, $expense->getBeginYear());
+        $this->assertEquals(8, $expense->getBeginMonth());
+        $this->assertFalse($expense->isActive());
+
+        $expense->reschedule();
+        $this->assertEquals(2043, $expense->getBeginYear());
+        $this->assertEquals(8, $expense->getBeginMonth());
+        $this->assertFalse($expense->isActive());
     }
 }
