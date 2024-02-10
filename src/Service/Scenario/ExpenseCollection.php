@@ -130,12 +130,7 @@ class ExpenseCollection extends Scenario
                         $expense->repeatEvery(),
                     );
                     $this->getLog()->debug($msg);
-                    $nextPeriod = $period->addMonths(
-                        $expense->beginYear(), $expense->beginMonth(),
-                        $expense->repeatEvery());
-                    $expense->markPlanned();
-                    $expense->setBeginYear($nextPeriod->getYear());
-                    $expense->setBeginMonth($nextPeriod->getMonth());
+                    $expense->reschedule();
                     break;
             }
         }
