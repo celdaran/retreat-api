@@ -31,14 +31,23 @@ class Util
      *
      * @param int $year1
      * @param int $month1
-     * @param int $year2
-     * @param int $month2
+     * @param ?int $year2
+     * @param ?int $month2
      * @return int
      */
-    public static function periodCompare(int $year1, int $month1, int $year2, int $month2): int
+    public static function periodCompare(int $year1, int $month1, ?int $year2, ?int $month2): int
     {
-        $time1 = strtotime(sprintf('%d-%d-01', $year1, $month1));
-        $time2 = strtotime(sprintf('%d-%d-01', $year2, $month2));
+        // Explicitly set nulls to linux epoch start
+        if ($year2 === null) {
+            $year2 = 1970;
+        }
+        if ($month2 === null) {
+            $month2 = 1;
+        }
+
+        // Convert to things
+        $time1 = strtotime(sprintf('%04d-%02d-01', $year1, $month1));
+        $time2 = strtotime(sprintf('%04d-%02d-01', $year2, $month2));
 
         if ($time1 === $time2) {
             return 0;

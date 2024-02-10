@@ -30,7 +30,7 @@ final class utilClassTest extends TestCase
         $this->assertEquals(1276.04, $interest->value());
     }
 
-    public function testPeriodCompare(): void
+    public function testPeriodCompareBoth(): void
     {
         $cmp = Util::periodCompare(2026, 1, 2026, 1);
         $this->assertEquals(0, $cmp);
@@ -44,4 +44,29 @@ final class utilClassTest extends TestCase
         $cmp = Util::periodCompare(2025, 1, 2025, 2);
         $this->assertEquals(-1, $cmp);
     }
+
+    public function testPeriodCompareNulls(): void
+    {
+        $cmp = Util::periodCompare(2030, 6, NULL, NULL);
+        $this->assertEquals(1, $cmp);
+
+        $cmp = Util::periodCompare(2000, 1, NULL, NULL);
+        $this->assertEquals(1, $cmp);
+
+        $cmp = Util::periodCompare(1999, 1, NULL, NULL);
+        $this->assertEquals(1, $cmp);
+
+        $cmp = Util::periodCompare(1970, 2, NULL, NULL);
+        $this->assertEquals(1, $cmp);
+
+        $cmp = Util::periodCompare(1970, 1, NULL, NULL);
+        $this->assertEquals(0, $cmp);
+
+        $cmp = Util::periodCompare(1969, 12, NULL, NULL);
+        $this->assertEquals(-1, $cmp);
+
+        $cmp = Util::periodCompare(1960, 1, NULL, NULL);
+        $this->assertEquals(-1, $cmp);
+    }
+
 }
