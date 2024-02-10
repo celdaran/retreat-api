@@ -14,7 +14,11 @@ INSERT INTO scenario (scenario_id, scenario_name, account_type_id) VALUES
 
   (13, 'ut04-expenses', 1),
   (14, 'ut04-assets',   2),
-  (15, 'ut04-earnings', 3)
+  (15, 'ut04-earnings', 3),
+
+  (16, 'ut05-expenses', 1),
+  (17, 'ut05-assets',   2),
+  (18, 'ut05-earnings', 3)
 ;
 
 -- -----------------------------------------------------------------------------
@@ -29,12 +33,6 @@ INSERT INTO expense (scenario_id, expense_name, amount, inflation_rate, begin_ye
 INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, begin_after, begin_year, begin_month) VALUES
   (5, 'Asset 1', 1000.00, 100.00, 0.000, NULL, 2025, 1)
 ;
-
-/*
-INSERT INTO earnings (scenario_id, earnings_name, amount, inflation_rate, begin_year, begin_month) VALUES
-  (6, 'Earnings 1', 200.00, 0.000, 2025, 1)
-;
-*/
 
 -- -----------------------------------------------------------------------------
 -- Unit Test: 02
@@ -95,4 +93,39 @@ INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr
 ;
 INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, begin_after, begin_year, begin_month) VALUES
   (14, 'Asset 3', 3000.00, 300.00, 10.000, NULL, 2025, 1)
+;
+
+-- -----------------------------------------------------------------------------
+-- Unit Test: 05
+-- Purpose..: This is the Everything Bagel test set
+-- -----------------------------------------------------------------------------
+
+INSERT INTO expense (scenario_id, expense_name, amount, inflation_rate, begin_year, begin_month, end_year, end_month, repeat_every)
+VALUES
+  (16, 'Mortgage',         1500.00, 0.000, 2025, 8, 2031,    5, NULL),
+  (16, 'Property Tax',    12000.00, 2.000, 2026, 1, NULL, NULL,   12),
+  (16, 'Home Insurance',   1500.00, 2.500, 2026, 3, NULL, NULL,   12),
+  (16, 'Utilities',         300.00, 3.000, 2025, 8, NULL, NULL, NULL),
+  (16, 'Home Maint',        500.00, 2.000, 2027, 1, 2037,    3, NULL),
+  (16, 'Healthcare',       1000.00, 5.000, 2025, 8, NULL, NULL, NULL),
+  (16, 'Car Expenses',      250.00, 2.500, 2025, 8, NULL, NULL, NULL),
+  (16, 'Food',              600.00, 7.500, 2025, 8, NULL, NULL, NULL),
+  (16, 'Wildcard',         7000.00, 0.000, 2030, 7, 2050,   12,   36),
+  (16, 'Travel',           1000.00, 3.000, 2025, 9, 2045,   10,    4)
+;
+
+INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, taxable, begin_after, begin_year, begin_month)
+VALUES
+  (17, 'Old 401k',        50000.00, 1000.00, 3.000, 1, NULL, 2025, 8),
+  (17, 'New 401k',        25000.00, 2500.00, 3.000, 1, NULL, 2025, 8),
+  (17, 'HYSA 1',          50000.00, 5000.00, 4.500, 1, NULL, 2025, 8),
+  (17, 'HYSA 2',          35000.00, 1500.00, 4.500, 1, NULL, 2025, 8),
+  (17, 'Stonks',         100000.00, 1500.00, 4.500, 1, (SELECT a2.asset_id FROM asset a2 WHERE a2.asset_name = 'HYSA 2'), 2025, 8)
+;
+
+INSERT INTO earnings (scenario_id, earnings_name, amount, inflation_rate, begin_year, begin_month, end_year, end_month, repeat_every)
+VALUES
+  (18, 'Social Security 1',  500.00, 1.500, 2025, 1, 2055, 12, NULL),
+  (18, 'Social Security 2',  500.00, 1.500, 2025, 1, 2055, 12, NULL),
+  (18, 'Some Side Gig',      250.00, 0.000, 2027, 1, 2032,  9, NULL)
 ;
