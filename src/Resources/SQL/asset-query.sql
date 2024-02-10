@@ -19,5 +19,10 @@ FROM (
        ORDER BY asset_id
      ) AS a
 GROUP BY a.asset_name
-ORDER BY a.begin_year, a.begin_month
+ORDER BY
+  a.begin_year,
+  a.begin_month,
+  a.apr DESC,
+  a.max_withdrawal,
+  a.asset_name
 ;

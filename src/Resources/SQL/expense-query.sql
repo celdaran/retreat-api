@@ -17,5 +17,8 @@ FROM (
        ORDER BY expense_id
      ) AS e
 GROUP BY e.expense_name
-ORDER BY e.expense_name
+ORDER BY
+  e.begin_year,
+  e.begin_month,
+  e.expense_name
 ;
