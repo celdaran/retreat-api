@@ -72,7 +72,7 @@ class ExpenseCollection extends Scenario
         return $audit;
     }
 
-    public function tallyExpenses(Period $period): Money
+    public function activateExpenses(Period $period)
     {
         // Activate expenses based on period
         /** @var Expense $expense */
@@ -88,8 +88,11 @@ class ExpenseCollection extends Scenario
                 $expense->markActive();
             }
         }
+    }
 
-        // Now get amounts, drawing from every participating expense
+    public function tallyExpenses(Period $period): Money
+    {
+        // First, get amounts, drawing from every participating expense
         $total = new Money();
         foreach ($this->expenses as $expense) {
             if ($expense->isActive()) {
@@ -103,7 +106,8 @@ class ExpenseCollection extends Scenario
             }
         }
 
-        // Lastly, has it ended?
+        // Second, has it ended?
+        /** @var Expense $expense */
         foreach ($this->expenses as $expense) {
             $action = $expense->timeToEnd($period);
             switch ($action) {

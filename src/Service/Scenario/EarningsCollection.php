@@ -68,7 +68,7 @@ class EarningsCollection extends Scenario
         return $audit;
     }
 
-    public function tallyEarnings(Period $period): Money
+    public function activateEarnings(Period $period)
     {
         // Activate earnings based on period
         /** @var Earnings $earnings */
@@ -85,7 +85,11 @@ class EarningsCollection extends Scenario
             }
         }
 
-        // Now get amounts, drawing from every participating earnings
+    }
+
+    public function tallyEarnings(Period $period): Money
+    {
+        // First, get amounts, drawing from every participating earnings
         $total = new Money();
         foreach ($this->earnings as $earnings) {
             if ($earnings->isActive()) {
@@ -99,7 +103,7 @@ class EarningsCollection extends Scenario
             }
         }
 
-        // Lastly, has it ended?
+        // Second, has it ended?
         foreach ($this->earnings as $earnings) {
             $action = $earnings->timeToEnd($period);
             switch ($action) {
