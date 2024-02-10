@@ -66,7 +66,7 @@ class Engine
      * Core function of the engine: to take all inputs and generate a plan
      * @throws Exception
      */
-    public function run(int $periods, ?int $startYear = null, ?int $startMonth = null): bool
+    public function run(Until $until, ?int $startYear = null, ?int $startMonth = null): bool
     {
         // Load scenarios
         // A "scenario" is an array of like items (an array of expenses, array of assets)
@@ -87,12 +87,13 @@ class Engine
         $this->log->debug(sprintf("  Expense scenario: %s", $this->expenseScenarioName));
         $this->log->debug(sprintf("  Asset scenario: %s", $this->assetScenarioName));
         $this->log->debug(sprintf("  Earnings scenario: %s", $this->earningsScenarioName));
-        $this->log->debug(sprintf("  Duration: %d", $periods));
+        $this->log->debug(sprintf("  Until: %s", $until->toString()));
         $this->log->debug(sprintf("  Start Year: %d", $this->currentPeriod->getYear()));
         $this->log->debug(sprintf("  Start Month: %d", $this->currentPeriod->getMonth()));
 
-        // Loop until the requested number of months have passed.
-        while ($periods > 0) {
+        // Loop until we've satisfied our run time
+        $shortfall = new Money();
+        while ($until->unsatisfied($this->currentPeriod, $shortfall)) {
 
             $this->log->debug(sprintf("-- PERIOD: %d (%04d-%02d) --------------------------------------------- ",
                 $this->currentPeriod->getCurrentPeriod(),
@@ -132,7 +133,6 @@ class Engine
 
             // Next period
             $this->currentPeriod->advance();
-            $periods--;
         }
 
         return true;
