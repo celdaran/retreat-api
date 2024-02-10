@@ -236,7 +236,7 @@ class AssetCollection extends Scenario
 
     private function fetchQuery(): string
     {
-        return file_get_contents(__DIR__ . '/../../Resources/SQL/asset-query.sql');
+        return file_get_contents(__DIR__ . '/../../Resources/Query/asset-query.sql');
     }
 
     /**
