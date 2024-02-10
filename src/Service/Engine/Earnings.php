@@ -20,6 +20,11 @@ class Earnings
     protected ?int $repeatEvery;
     protected int $status;
 
+    public function __construct()
+    {
+        $this->status = self::PLANNED;
+    }
+
     //--------------------------------------------
     // Setters
     //--------------------------------------------
