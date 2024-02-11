@@ -1,4 +1,4 @@
-<?php namespace App\Api;
+<?php namespace App\Controller;
 
 use App\System\LogFactory;
 use App\Service\Scenario\Scenario as DataScenario;

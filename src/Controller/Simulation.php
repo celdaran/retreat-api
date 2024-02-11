@@ -1,16 +1,15 @@
-<?php
-
-namespace App\Api;
+<?php namespace App\Controller;
 
 use Exception;
+
+use Symfony\Component\Routing\Annotation\Route;
+
 use App\Service\Engine\Engine;
 use App\Service\Engine\Until;
 
 class Simulation
 {
     /**
-     * @url POST /summary
-     *
      * @param string $expense
      * @param string $asset
      * @param string $earnings
@@ -23,6 +22,7 @@ class Simulation
      * @api
      *
      */
+    #[Route('/summary', methods: ['POST'])]
     public function summary(
         string $expense,
         string $asset,

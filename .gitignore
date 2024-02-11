@@ -2,13 +2,14 @@
 .tmp/
 .vscode/
 .idea/
+var/
 vendor/
 
 # ignore backup files
 *~
 
 # ignore configuration
-.env
+.env.local
 phpunit.xml
 .phpunit.result.cache
 

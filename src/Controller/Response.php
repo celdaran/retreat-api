@@ -1,4 +1,4 @@
-<?php namespace App\Api;
+<?php namespace App\Controller;
 
 /**
  * Class Response
