@@ -9,16 +9,26 @@ $dotenv->load();
 
 $api = new Simulation();
 
-$results = $api->assetDepletion(
-    'UNIT TEST 01',
-    'UNIT TEST 01',
-    'Default',
-    12,
+$response = $api->assetDepletion(
+    'ut05-expenses',
+    'ut05-assets',
+    'ut05-earnings',
+    240,
     2025,
-    1,
+    8,
 );
 
+/*
 foreach ($results['logs'] as $log) {
     echo $log;
 }
-print json_encode($results['simulation']);
+*/
+
+/*
+$log = implode("", $results['logs']);
+file_put_contents('local.log', $log);
+*/
+
+echo "\n";
+print json_encode($response->getPayload());
+echo "\n";
