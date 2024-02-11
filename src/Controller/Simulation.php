@@ -54,7 +54,7 @@ class Simulation
     #[Route('/asset/depletion', methods: ['POST'])]
     public function assetDepletion(Request $request): JsonResponse
     {
-        $body = json_decode($request->getContent());
+        $body = json_decode($request->getContent(), true);
 
         $expense = $body['expense'];
         $asset = $body['asset'];
@@ -148,7 +148,7 @@ class Simulation
 
         $response->setPayload($payload);
 
-        return new JsonResponse($response);
+        return new JsonResponse($response->getPayload());
     }
 
     /**
