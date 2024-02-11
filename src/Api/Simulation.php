@@ -4,6 +4,7 @@ namespace App\Api;
 
 use Exception;
 use App\Service\Engine\Engine;
+use App\Service\Engine\Until;
 
 class Simulation
 {
@@ -33,8 +34,8 @@ class Simulation
         $payload = [];
 
         try {
-            $plan = $this->getPlan($expense, $asset, $earnings, $periods, $startYear, $startMonth);
-            foreach ($plan['simulation'] as $period) {
+            $plan = $this->getSimulation($expense, $asset, $earnings, $periods, $startYear, $startMonth);
+            foreach ($plan->getSimulation() as $period) {
                 $payload[] = [
                     "x" => sprintf("%04d-%02d", $period["year"], $period["month"]),
                     "y" => $period["net_expense"]->value(),
@@ -61,7 +62,7 @@ class Simulation
      * @param string $startYear
      * @param string $startMonth
      *
-     * @return array
+     * @return Response
      * @api
      *
      */
@@ -72,7 +73,7 @@ class Simulation
         string $periods,
         string $startYear,
         string $startMonth
-    ): array {
+    ): Response {
 
         // Generate payload template
         $payload = [
@@ -109,16 +110,16 @@ class Simulation
             ],
             'series' => [],
         ];
-        $logs = [];
+
+        $response = new Response();
 
         // Fill in data source entries
         try {
             $assetList = [];
             $first = true;
 
-            $plan = $this->getPlan($expense, $asset, $earnings, $periods, $startYear, $startMonth);
-            $logs = $plan['logs'];
-            foreach ($plan['simulation'] as $period) {
+            $response = $this->getSimulation($expense, $asset, $earnings, $periods, $startYear, $startMonth);
+            foreach ($response->getSimulation() as $period) {
 
                 $entry = [
                     sprintf("%04d-%02d", $period["year"], $period["month"]),
@@ -157,13 +158,10 @@ class Simulation
             ];
         }
 
-        return [
-            'simulation' => $payload,
-            'logs' => $logs,
-        ];
+        $response->setPayload($payload);
 
+        return $response;
     }
-
 
     /**
      * getPlan
@@ -178,37 +176,35 @@ class Simulation
      * @param string $startYear
      * @param string $startMonth
      *
-     * @return array
+     * @return Response
      * @throws Exception
      */
-    private function getPlan(
+    private function getSimulation(
         string $expense,
         string $asset,
         string $earnings,
         string $periods,
         string $startYear,
         string $startMonth
-    ): array {
+    ): Response {
 
         $engine = new Engine(
             $expense,
             $asset,
             $earnings
         );
+        $until = new Until();
+        $until->setPeriods($periods);
 
-        $success = $engine->run($periods, $startYear, $startMonth);
-
-        if (!$success) {
-            throw new Exception("Error running simulation");
+        if (!$engine->run($until, $startYear, $startMonth)) {
+            return new Response();
         }
 
         $simulation = $engine->getPlan();
         $logs = $engine->getLogs();
+        $audit = $engine->getAudit();
 
-        return [
-            'simulation' => $simulation,
-            'logs' => $logs,
-        ];
+        return new Response(true, $simulation, $logs, $audit);
     }
 
 }
