@@ -34,7 +34,7 @@ class Simulation
             foreach ($plan->getSimulation() as $period) {
                 $payload[] = [
                     "x" => sprintf("%04d-%02d", $period["year"], $period["month"]),
-                    "y" => $period["net_expense"]->value(),
+                    "y" => $period["shortfall"],
                 ];
             }
         } catch (Exception $e) {
