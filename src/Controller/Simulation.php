@@ -3,6 +3,8 @@
 use Exception;
 
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 use App\Service\Engine\Engine;
 use App\Service\Engine\Until;
@@ -10,27 +12,21 @@ use App\Service\Engine\Until;
 class Simulation
 {
     /**
-     * @param string $expense
-     * @param string $asset
-     * @param string $earnings
-     *
-     * @param string $periods
-     * @param string $startYear
-     * @param string $startMonth
-     *
-     * @return array
-     * @api
-     *
+     * @param Request $request
+     * @return JsonResponse
      */
     #[Route('/summary', methods: ['POST'])]
-    public function summary(
-        string $expense,
-        string $asset,
-        string $earnings,
-        string $periods,
-        string $startYear,
-        string $startMonth
-    ): array {
+    public function summary(Request $request): JsonResponse
+    {
+        $body = json_decode($request->getContent(), true);
+
+        $expense = $body['expense'];
+        $asset = $body['asset'];
+        $earnings = $body['earnings'];
+        $periods = $body['periods'];
+        $startYear = $body['startYear'];
+        $startMonth = $body['startMonth'];
+
         $payload = [];
 
         try {
@@ -48,32 +44,24 @@ class Simulation
             ];
         }
 
-        return $payload;
+        return new JsonResponse($payload);
     }
 
     /**
-     * @url POST /asset/depletion
-     *
-     * @param string $expense
-     * @param string $asset
-     * @param string $earnings
-     *
-     * @param string $periods
-     * @param string $startYear
-     * @param string $startMonth
-     *
-     * @return Response
-     * @api
-     *
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function assetDepletion(
-        string $expense,
-        string $asset,
-        string $earnings,
-        string $periods,
-        string $startYear,
-        string $startMonth
-    ): Response {
+    #[Route('/asset/depletion', methods: ['POST'])]
+    public function assetDepletion(Request $request): JsonResponse
+    {
+        $body = json_decode($request->getContent());
+
+        $expense = $body['expense'];
+        $asset = $body['asset'];
+        $earnings = $body['earnings'];
+        $periods = $body['periods'];
+        $startYear = $body['startYear'];
+        $startMonth = $body['startMonth'];
 
         // Generate payload template
         $payload = [
@@ -160,7 +148,7 @@ class Simulation
 
         $response->setPayload($payload);
 
-        return $response;
+        return new JsonResponse($response);
     }
 
     /**
