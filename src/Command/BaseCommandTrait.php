@@ -1,12 +1,10 @@
 <?php namespace App\Command;
 
-use Symfony\Component\Console\Command\Command;
-
 use App\Service\Engine\Simulator;
 use App\Service\Engine\SimulatorResponse;
 use App\Service\Reporting\Report;
 
-class BaseCommand extends Command
+trait BaseCommand
 {
     protected function initSimulation(): Simulator
     {
@@ -38,12 +36,12 @@ class BaseCommand extends Command
             file_put_contents($csvFileName, $report);
             file_put_contents($logFileName, join("", $logs));
 
-            return Command::SUCCESS;
+            return 0;
         } else {
             $logFileName = sprintf('simulation.%s.err', date('Ymd-His'));
             $payload = $response->getPayload();
             file_put_contents($logFileName, $payload['message']);
-            return Command::FAILURE;
+            return 1;
         }
     }
 }
