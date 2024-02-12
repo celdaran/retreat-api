@@ -1,7 +1,7 @@
 {
     "name": "technitivity/retreat-api",
     "type": "project",
-    "description": "RESTful API for Retreat: a retirement planning tool",
+    "description": "REST API for Retreat: a retirement simulator",
     "license": "MIT",
     "minimum-stability": "stable",
     "prefer-stable": true,

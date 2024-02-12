@@ -47,14 +47,14 @@ final class engineClassTest extends TestCase
 
     private function processOutput(): array
     {
-        $plan = self::$engine->getPlan();
+        $plan = self::$engine->getSimulation();
         $logs = self::$engine->getLogs();
 
         $reporting = new Report();
         $report = $reporting->standard($plan);
 
-        $csvFileName = sprintf('plan.%s.csv', date('Ymd-His'));
-        $logFileName = sprintf('plan.%s.log', date('Ymd-His'));
+        $csvFileName = sprintf('simulation.%s.csv', date('Ymd-His'));
+        $logFileName = sprintf('simulation.%s.log', date('Ymd-His'));
 
         file_put_contents($csvFileName, $report);
         file_put_contents($logFileName, join("", $logs));

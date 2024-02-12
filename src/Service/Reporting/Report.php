@@ -6,20 +6,20 @@ class Report
     private array $output = [];
 
     /**
-     * @param array $plan
+     * @param array $simulation
      * @return array
      */
-    public function standard(array $plan): array
+    public function standard(array $simulation): array
     {
         $i = 0;
-        foreach ($plan as $p) {
+        foreach ($simulation as $step) {
             // Header
             if ($i === 0) {
-                $this->renderHeader($p);
+                $this->renderHeader($step);
             }
 
             // Body
-            $this->renderLine($p);
+            $this->renderLine($step);
             $i++;
         }
         return $this->output;

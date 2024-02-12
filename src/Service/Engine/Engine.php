@@ -18,7 +18,7 @@ class Engine
     private AssetCollection $assetCollection;
     private EarningsCollection $earningsCollection;
 
-    private array $plan;
+    private array $simulation;
     private array $audit;
 
     private Log $log;
@@ -50,8 +50,7 @@ class Engine
         $this->assetCollection = new AssetCollection($this->log);
         $this->earningsCollection = new EarningsCollection($this->log);
 
-        $this->plan = [];
-        $this->audit = [];
+        $this->simulation = [];
 
         $this->annualIncome = new Money();
 
@@ -63,7 +62,7 @@ class Engine
     }
 
     /**
-     * Core function of the engine: to take all inputs and generate a plan
+     * Core function of the engine: to take all inputs and generate a simulation
      * @throws Exception
      */
     public function run(Until $until, ?int $startYear = null, ?int $startMonth = null): bool
@@ -106,7 +105,7 @@ class Engine
             $this->earningsCollection->activateEarnings($this->currentPeriod);
 
             // Record start of month figures
-            $planEntry = [
+            $step = [
                 'period' => $this->currentPeriod->getCurrentPeriod(),
                 'year' => $this->currentPeriod->getYear(),
                 'month' => $this->currentPeriod->getMonth(),
@@ -132,10 +131,10 @@ class Engine
             // Deal with income taxes
             $this->payIncomeTax($expense);
 
-            // Lastly amend the plan
-            $planEntry['expense'] = $expense->value();
-            $planEntry['shortfall'] = $shortfall->value();
-            $this->plan[] = $planEntry;
+            // Lastly amend the simulation
+            $step['expense'] = $expense->value();
+            $step['shortfall'] = $shortfall->value();
+            $this->simulation[] = $step;
 
             // Next period
             $this->currentPeriod->advance();
@@ -144,9 +143,9 @@ class Engine
         return true;
     }
 
-    public function getPlan(): array
+    public function getSimulation(): array
     {
-        return $this->plan;
+        return $this->simulation;
     }
 
     public function getLogs(): array
