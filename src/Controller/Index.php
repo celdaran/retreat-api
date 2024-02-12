@@ -6,7 +6,7 @@ use Symfony\Component\Routing\Annotation\Route;
 class Index extends Response
 {
     #[Route('/', methods: ['GET'])]
-    public function version(): Response {
+    public function index(): Response {
         return new Response($this->staticIndex());
     }
 
