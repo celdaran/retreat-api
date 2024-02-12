@@ -1,17 +1,14 @@
 <?php namespace App\Command;
 
-use App\Service\Reporting\Report;
-use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 
 use App\Service\Engine\Simulator;
+use App\Service\Engine\SimulatorResponse;
+use App\Service\Reporting\Report;
 
-#[AsCommand(name: 'app:run')]
-class RunSimulationCommand extends Command
+class BaseCommand extends Command
 {
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function initSimulation(): Simulator
     {
         $simulator = new Simulator();
         $simulator->setParameters(
@@ -22,11 +19,11 @@ class RunSimulationCommand extends Command
             2025,
             8,
         );
+        return $simulator;
+    }
 
-        $response = $simulator->runAssetDepletion();
-
-        $payload = $response->getPayload();
-
+    protected function processSimulation(SimulatorResponse $response): int
+    {
         if ($response->isSuccess()) {
 
             $simulation = $response->getSimulation();
@@ -43,7 +40,9 @@ class RunSimulationCommand extends Command
 
             return Command::SUCCESS;
         } else {
-            $output->writeln($payload['message']);
+            $logFileName = sprintf('simulation.%s.err', date('Ymd-His'));
+            $payload = $response->getPayload();
+            file_put_contents($logFileName, $payload['message']);
             return Command::FAILURE;
         }
     }
