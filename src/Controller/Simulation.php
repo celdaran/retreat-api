@@ -26,7 +26,7 @@ class Simulation
     {
         $this->simulator->setParametersFromRequest($request);
         $simulatorResponse = $this->simulator->runShortfalls();
-        return new JsonResponse($simulatorResponse);
+        return new JsonResponse($simulatorResponse->getPayload());
     }
 
     /**
@@ -40,6 +40,6 @@ class Simulation
     {
         $this->simulator->setParametersFromRequest($request);
         $simulatorResponse = $this->simulator->runAssetDepletion();
-        return new JsonResponse($simulatorResponse);
+        return new JsonResponse($simulatorResponse->getPayload());
     }
 }
