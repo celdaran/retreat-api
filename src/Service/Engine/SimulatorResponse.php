@@ -1,10 +1,10 @@
-<?php namespace App\Controller;
+<?php namespace App\Engine;
 
 /**
- * Class Response
+ * Class SimulatorResponse
  * Standard class for returning API responses in a uniform format
  */
-class Response
+class SimulatorResponse
 {
     /** @var bool */
     private bool $success;
@@ -39,34 +39,27 @@ class Response
 
     /**
      * @param bool $success
-     * @return Response
+     * @return SimulatorResponse
      */
-    public function setSuccess(bool $success): Response
+    public function setSuccess(bool $success): SimulatorResponse
     {
         $this->success = $success;
         return $this;
     }
 
     /**
-     * @return mixed
+     * @return array
      */
-    public function getSimulation($format = 'array'): mixed
+    public function getSimulation(): array
     {
-        switch ($format) {
-            case 'array':
-                return $this->simulation;
-            case 'json':
-                return json_encode($this->simulation);
-            default:
-                return 'Unsupported format';
-        }
+        return $this->simulation;
     }
 
     /**
      * @param array $simulation
-     * @return Response
+     * @return SimulatorResponse
      */
-    public function setSimulation(array $simulation): Response
+    public function setSimulation(array $simulation): SimulatorResponse
     {
         $this->simulation = $simulation;
         return $this;
@@ -82,9 +75,9 @@ class Response
 
     /**
      * @param array $log
-     * @return Response
+     * @return SimulatorResponse
      */
-    public function setLogs(array $log): Response
+    public function setLogs(array $log): SimulatorResponse
     {
         $this->log = $log;
         return $this;
@@ -111,9 +104,9 @@ class Response
 
     /**
      * @param string $audit
-     * @return Response
+     * @return SimulatorResponse
      */
-    public function setAudit(string $audit): Response
+    public function setAudit(string $audit): SimulatorResponse
     {
         $this->audit = $audit;
         return $this;
@@ -129,9 +122,9 @@ class Response
 
     /**
      * @param array $payload
-     * @return Response
+     * @return SimulatorResponse
      */
-    public function setPayload(array $payload): Response
+    public function setPayload(array $payload): SimulatorResponse
     {
         $this->payload = $payload;
         return $this;
