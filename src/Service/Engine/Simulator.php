@@ -2,7 +2,7 @@
 
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
-use App\Engine\SimulatorResponse;
+use App\Service\Engine\SimulatorResponse;
 
 class Simulator
 {

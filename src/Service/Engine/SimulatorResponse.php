@@ -1,4 +1,4 @@
-<?php namespace App\Engine;
+<?php namespace App\Service\Engine;
 
 /**
  * Class SimulatorResponse
