@@ -26,7 +26,7 @@
 
         <!-- ###+ symfony/framework-bundle ### -->
         <env name="APP_ENV" value="dev"/>
-        <env name="APP_SECRET" value="e6fc285e7a0149b28001f8b8ac358ded"/>
+        <env name="APP_SECRET" value=""/>
         <!-- ###- symfony/framework-bundle ### -->
     </php>
 
