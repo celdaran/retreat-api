@@ -48,19 +48,19 @@ final class utilClassTest extends TestCase
     public function testPeriodCompareNulls(): void
     {
         $cmp = Util::periodCompare(2030, 6, NULL, NULL);
-        $this->assertEquals(1, $cmp);
+        $this->assertEquals(-1, $cmp);
 
         $cmp = Util::periodCompare(2000, 1, NULL, NULL);
-        $this->assertEquals(1, $cmp);
+        $this->assertEquals(-1, $cmp);
 
         $cmp = Util::periodCompare(1999, 1, NULL, NULL);
-        $this->assertEquals(1, $cmp);
+        $this->assertEquals(-1, $cmp);
 
         $cmp = Util::periodCompare(1970, 2, NULL, NULL);
-        $this->assertEquals(1, $cmp);
+        $this->assertEquals(-1, $cmp);
 
         $cmp = Util::periodCompare(1970, 1, NULL, NULL);
-        $this->assertEquals(0, $cmp);
+        $this->assertEquals(-1, $cmp);
 
         $cmp = Util::periodCompare(1969, 12, NULL, NULL);
         $this->assertEquals(-1, $cmp);

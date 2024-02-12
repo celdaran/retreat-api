@@ -39,10 +39,10 @@ class Util
     {
         // Explicitly set nulls to linux epoch start
         if ($year2 === null) {
-            $year2 = 1970;
+            $year2 = 9999;
         }
         if ($month2 === null) {
-            $month2 = 1;
+            $month2 = 12;
         }
 
         // Convert to things
