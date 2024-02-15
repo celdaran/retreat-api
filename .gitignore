@@ -17,7 +17,10 @@ phpunit.xml
 .dockerignore
 Dockerfile
 docker/
-db/db-backups
+
+# ignore data
+db/db-backups/
+db/db-production/
 
 ###> symfony/framework-bundle ###
 /.env.local
