@@ -35,7 +35,7 @@ class Report
                 $line .= sprintf('"%s",', addslashes($expenseName));
             }
         }
-        $line .= '"total expenses",,';
+        $line .= '"total expenses","agi","income tax",,';
 
         // Earnings
         if (count($p['earnings']) > 0) {
@@ -52,7 +52,7 @@ class Report
                 $line .= sprintf('"%s",', addslashes($assetName));
             }
         }
-        $line .= '"total assets"' . "\n";
+        $line .= '"total withdrawals","total assets"' . "\n";
 
         // Output
         $this->output[] = $line;
@@ -73,7 +73,7 @@ class Report
             $line .= sprintf('%.2f,', $expense);
             $totalExpenses += $expense;
         }
-        $line .= sprintf('%.2f,,', $totalExpenses);
+        $line .= sprintf('%.2f,%.2f,%.2f,,', $totalExpenses, $p['agi'], $p['incomeTax']);
 
         // Earnings
         foreach ($p['earnings'] as $earnings) {
@@ -88,6 +88,7 @@ class Report
             $line .= sprintf('%.2f,', $asset);
             $totalAssets += $asset;
         }
+        $line .= sprintf('%.2f,', $p['withdrawals']);
         $line .= $totalAssets . "\n";
 
         // Done

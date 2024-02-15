@@ -126,14 +126,19 @@ class Engine
 
             // If earnings doesn't cover it, pull from assets
             // e.g., I now need to pull $1750 from assets to cover expenses
-            $shortfall = $this->adjustAssetForPeriod($expense, $earnings);
+            [$withdrawals, $shortfall] = $this->adjustAssetForPeriod($expense, $earnings);
+
+            // Log annual income at this step
+            $step['agi'] = $this->annualIncome->value();
 
             // Deal with income taxes
-            $this->payIncomeTax($expense);
+            $incomeTax = $this->payIncomeTax($expense);
 
             // Lastly amend the simulation
             $step['expense'] = $expense->value();
+            $step['withdrawals'] = $withdrawals->value();
             $step['shortfall'] = $shortfall->value();
+            $step['incomeTax'] = $incomeTax->value();
             $this->simulation[] = $step;
 
             // Next period
@@ -226,7 +231,7 @@ class Engine
      *
      * @throws Exception
      */
-    private function adjustAssetForPeriod(Money $expense, Money $earnings): Money
+    private function adjustAssetForPeriod(Money $expense, Money $earnings): array
     {
         $shortfall = new Money();
 
@@ -248,10 +253,10 @@ class Engine
             $shortfall->assign(0.00);
         }
 
-        return $shortfall;
+        return [$withdrawals, $shortfall];
     }
 
-    private function payIncomeTax(Money $expense)
+    private function payIncomeTax(Money $expense): Money
     {
         // Our monthly expenses will be met by income from earnings and asset sales
         // But that entire figure is not subject to income tax and there are a myriad
@@ -262,24 +267,29 @@ class Engine
         // Spit this out each period, regardless of whether we pay or not
         $this->log->debug("Annual income in period {$this->currentPeriod->getCurrentPeriod()} is {$this->annualIncome->formatted()}");
 
+        $incomeTax = new Money();
+
         // If we're in the fourth period, calculate taxes
         // Note: this has issues. But it's good enough
         if ($this->currentPeriod->getCurrentPeriod() % 12 === 4) {
             if ($this->annualIncome->value() > 0.00) {
-                $taxAmount = Util::calculateIncomeTax($this->annualIncome->value(), $this->currentPeriod->getYear());
-                $expense->add($taxAmount);
-                $effectiveTaxRate = ($taxAmount / $this->annualIncome->value()) * 100;
+                $tax = Util::calculateIncomeTax($this->annualIncome->value(), $this->currentPeriod->getYear());
+                $expense->add($tax);
+                $effectiveTaxRate = ($tax / $this->annualIncome->value()) * 100;
                 $msg = sprintf("Paying income tax of %0.2f in period %d (effective tax rate: %0.1f%%)",
-                    $taxAmount,
+                    $tax,
                     $this->currentPeriod->getCurrentPeriod(),
                     $effectiveTaxRate
                 );
                 $this->log->debug($msg);
                 $this->annualIncome->assign(0.00);
+                $incomeTax->assign($tax);
             } else {
                 $this->log->warn("Annual income was 0.00");
             }
         }
+
+        return $incomeTax;
     }
 
 }
