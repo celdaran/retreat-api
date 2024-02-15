@@ -10,12 +10,12 @@ trait BaseCommandTrait
     {
         $simulator = new Simulator();
         $simulator->setParameters(
-            'ut05-expenses',
-            'ut05-assets',
-            'ut05-earnings',
-            240,
+            'Default',
+            'Default',
+            'Default',
+            360,
             2025,
-            8,
+            1,
         );
         return $simulator;
     }
