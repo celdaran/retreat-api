@@ -4,6 +4,6 @@
 
 ## About 
 
-Retreat is an experimental financial planning tool.
+Retreat is an experimental retirement planning simulator.
 
 Full README.md TBD
