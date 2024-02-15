@@ -8,7 +8,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[AsCommand(name: 'app:shortfall')]
 class RunShortfallCommand extends Command
 {
-    use BaseCommand;
+    use BaseCommandTrait;
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {

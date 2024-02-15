@@ -4,7 +4,7 @@ use App\Service\Engine\Simulator;
 use App\Service\Engine\SimulatorResponse;
 use App\Service\Reporting\Report;
 
-trait BaseCommand
+trait BaseCommandTrait
 {
     protected function initSimulation(): Simulator
     {
