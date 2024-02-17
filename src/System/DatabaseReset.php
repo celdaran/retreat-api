@@ -15,14 +15,33 @@ class DatabaseReset
         $this->db = $db;
     }
 
-    public function reset()
+    /**
+     * Create tables
+     * @param bool $backup
+     */
+    public function reset(bool $backup = true)
     {
-        $this->_saveDatabase();
+        if ($backup) {
+          $this->_saveDatabase();
+        }
         $this->_dropTables();
         $this->_createTables();
-        $this->_hydrate(true);
     }
 
+    /**
+     * Populate tables
+     * @param bool $includeSystem
+     * @param bool $includeFixtures
+     * @param bool $includeProduction
+     */
+    public function hydrate(bool $includeSystem, bool $includeFixtures = false, bool $includeProduction = false)
+    {
+        $this->_hydrate($includeSystem, $includeFixtures, $includeProduction);
+    }
+
+    /**
+     * Run mysqldump on database
+     */
     private function _saveDatabase()
     {
         try {
@@ -36,12 +55,16 @@ class DatabaseReset
         }
     }
 
+    /**
+     * Drop all tables
+     */
     private function _dropTables()
     {
         $sql = '
             SET FOREIGN_KEY_CHECKS = 0;
             DROP TABLE IF EXISTS scenario;
             DROP TABLE IF EXISTS account_type;
+            DROP TABLE IF EXISTS income_type;
             DROP TABLE IF EXISTS expense;
             DROP TABLE IF EXISTS asset;
             DROP TABLE IF EXISTS earnings;
@@ -51,19 +74,35 @@ class DatabaseReset
         $this->db->exec($sql);
     }
 
+    /**
+     * Create schema (DDL)
+     */
     private function _createTables()
     {
         $sql = file_get_contents(__DIR__.'/../../db/retreat-schema.sql');
         $this->db->exec($sql);
     }
 
-    private function _hydrate(bool $includeFixtures = false)
+    /**
+     * Add rows (DML)
+     * @param bool $includeSystem
+     * @param bool $includeFixtures
+     * @param bool $includeProduction
+     */
+    private function _hydrate(bool $includeSystem, bool $includeFixtures = false, bool $includeProduction = false)
     {
-        $sql = file_get_contents(__DIR__.'/../../db/retreat-schema-hydrate.sql');
-        $this->db->exec($sql);
+        if ($includeSystem) {
+            $sql = file_get_contents(__DIR__.'/../../db/retreat-schema-hydrate.sql');
+            $this->db->exec($sql);
+        }
 
         if ($includeFixtures) {
             $sql = file_get_contents(__DIR__.'/../../db/retreat-schema-hydrate.unit-tests.sql');
+            $this->db->exec($sql);
+        }
+
+        if ($includeProduction) {
+            $sql = file_get_contents(__DIR__.'/../../db/db-production/retreat-schema-hydrate.production.sql');
             $this->db->exec($sql);
         }
     }

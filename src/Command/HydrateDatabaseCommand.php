@@ -2,14 +2,15 @@
 
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 use App\System\DatabaseReset;
 
-#[AsCommand(name: 'app:database:reset')]
-class ResetDatabaseCommand extends Command
+#[AsCommand(name: 'app:database:hydrate')]
+class HydrateDatabaseCommand extends Command
 {
     private DatabaseReset $database;
 
@@ -22,18 +23,17 @@ class ResetDatabaseCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('backup', 'b', InputOption::VALUE_NEGATABLE, 'Backup data before resetting')
+            ->addOption('test-data', 't', InputOption::VALUE_NONE, 'Include test data in reset')
+            ->addOption('prod-data', 'p', InputOption::VALUE_NONE, 'Include production data in reset')
         ;
     }
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $backupDataFirst = $input->getOption('backup');
-        if ($backupDataFirst === null) {
-            $backupDataFirst = true;
-        }
+        $includeSystemData = false;
+        $includeTestData = $input->getOption('test-data');
+        $includeProdData = $input->getOption('prod-data');
 
-        $this->database->reset($backupDataFirst);
-        $this->database->hydrate(true, false, false);
+        $this->database->hydrate($includeSystemData, $includeTestData, $includeProdData);
 
         return Command::SUCCESS;
     }
