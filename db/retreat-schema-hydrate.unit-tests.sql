@@ -30,8 +30,8 @@ INSERT INTO expense (scenario_id, expense_name, amount, inflation_rate, begin_ye
   (4, 'Expense 1', 100.00, 0.000, 2025, 1)
 ;
 
-INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, begin_after, begin_year, begin_month) VALUES
-  (5, 'Asset 1', 1000.00, 100.00, 0.000, NULL, 2025, 1)
+INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, income_type_id, begin_after, begin_year, begin_month) VALUES
+  (5, 'Asset 1', 1000.00, 100.00, 0.000, 0, NULL, 2025, 1)
 ;
 
 -- -----------------------------------------------------------------------------
@@ -43,12 +43,12 @@ INSERT INTO expense (scenario_id, expense_name, amount, inflation_rate, begin_ye
   (7, 'Expense 1', 100.00, 0.000, 2025, 1)
 ;
 
-INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, begin_after, begin_year, begin_month) VALUES
-  (8, 'Asset 1', 500.00, 100.00, 0.000, NULL, 2025, 1)
+INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, income_type_id, begin_after, begin_year, begin_month) VALUES
+  (8, 'Asset 1', 500.00, 100.00, 0.000, 0, NULL, 2025, 1)
 ;
 
-INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, begin_after, begin_year, begin_month) VALUES
-  (8, 'Asset 2', 1000.00, 100.00, 0.000, (SELECT a2.asset_id FROM asset a2 WHERE a2.scenario_id = 8 AND a2.asset_name = 'Asset 1'), 2025, 1)
+INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, income_type_id, begin_after, begin_year, begin_month) VALUES
+  (8, 'Asset 2', 1000.00, 100.00, 0.000, 0, (SELECT a2.asset_id FROM asset a2 WHERE a2.scenario_id = 8 AND a2.asset_name = 'Asset 1'), 2025, 1)
 ;
 
 -- -----------------------------------------------------------------------------
@@ -60,14 +60,14 @@ INSERT INTO expense (scenario_id, expense_name, amount, inflation_rate, begin_ye
   (10, 'Expense 1', 100.00, 0.000, 2025, 1)
 ;
 
-INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, begin_after, begin_year, begin_month) VALUES
-  (11, 'Asset 1', 300.00, 100.00, 0.000, NULL, 2025, 1)
+INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, income_type_id, begin_after, begin_year, begin_month) VALUES
+  (11, 'Asset 1', 300.00, 100.00, 0.000, 0, NULL, 2025, 1)
 ;
-INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, begin_after, begin_year, begin_month) VALUES
-  (11, 'Asset 2', 300.00, 100.00, 0.000, (SELECT a2.asset_id FROM asset a2 WHERE a2.scenario_id = 11 AND a2.asset_name = 'Asset 1'), 2025, 1)
+INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, income_type_id, begin_after, begin_year, begin_month) VALUES
+  (11, 'Asset 2', 300.00, 100.00, 0.000, 0, (SELECT a2.asset_id FROM asset a2 WHERE a2.scenario_id = 11 AND a2.asset_name = 'Asset 1'), 2025, 1)
 ;
-INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, begin_after, begin_year, begin_month) VALUES
-  (11, 'Asset 3', 600.00, 100.00, 0.000, (SELECT a2.asset_id FROM asset a2 WHERE a2.scenario_id = 11 AND a2.asset_name = 'Asset 2'), 2025, 1)
+INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, income_type_id, begin_after, begin_year, begin_month) VALUES
+  (11, 'Asset 3', 600.00, 100.00, 0.000, 0, (SELECT a2.asset_id FROM asset a2 WHERE a2.scenario_id = 11 AND a2.asset_name = 'Asset 2'), 2025, 1)
 ;
 
 -- -----------------------------------------------------------------------------
@@ -85,14 +85,14 @@ INSERT INTO expense (scenario_id, expense_name, amount, inflation_rate, begin_ye
   (13, 'Expense 3', 700.00, 5.000, 2035, 1)
 ;
 
-INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, begin_after, begin_year, begin_month) VALUES
-  (14, 'Asset 1', 1000.00, 100.00, 2.000, NULL, 2025, 1)
+INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, income_type_id, begin_after, begin_year, begin_month) VALUES
+  (14, 'Asset 1', 1000.00, 100.00, 2.000, 0, NULL, 2025, 1)
 ;
-INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, begin_after, begin_year, begin_month) VALUES
-  (14, 'Asset 2', 2000.00, 200.00, 5.000, NULL, 2025, 1)
+INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, income_type_id, begin_after, begin_year, begin_month) VALUES
+  (14, 'Asset 2', 2000.00, 200.00, 5.000, 0, NULL, 2025, 1)
 ;
-INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, begin_after, begin_year, begin_month) VALUES
-  (14, 'Asset 3', 3000.00, 300.00, 10.000, NULL, 2025, 1)
+INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, income_type_id, begin_after, begin_year, begin_month) VALUES
+  (14, 'Asset 3', 3000.00, 300.00, 10.000, 0, NULL, 2025, 1)
 ;
 
 -- -----------------------------------------------------------------------------
@@ -114,18 +114,20 @@ VALUES
   (16, 'Travel',           1000.00, 3.000, 2025, 9, 2045,   10,    4)
 ;
 
-INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, taxable, begin_after, begin_year, begin_month)
+INSERT INTO asset (scenario_id, asset_name, opening_balance, max_withdrawal, apr, income_type_id, begin_after, begin_year, begin_month)
 VALUES
-  (17, 'Old 401k',        50000.00, 1000.00, 3.000, 1, NULL, 2025, 8),
-  (17, 'New 401k',        25000.00, 2500.00, 3.000, 1, NULL, 2025, 8),
-  (17, 'HYSA 1',          50000.00, 5000.00, 4.500, 1, NULL, 2025, 8),
-  (17, 'HYSA 2',          35000.00, 1500.00, 4.500, 1, NULL, 2025, 8),
-  (17, 'Stonks',         100000.00, 1500.00, 4.500, 1, (SELECT a2.asset_id FROM asset a2 WHERE a2.asset_name = 'HYSA 2'), 2025, 8)
+  (17, 'Old 401k',        50000.00, 1000.00, 3.000, 5, NULL, 2025, 8),
+  (17, 'New 401k',        25000.00, 2500.00, 3.000, 5, NULL, 2025, 8),
+  (17, 'HYSA 1',          50000.00, 5000.00, 4.500, 2, NULL, 2025, 8),
+  (17, 'HYSA 2',          35000.00, 1500.00, 4.500, 2, NULL, 2025, 8),
+  (17, 'Stonks',         100000.00, 1500.00, 4.500, 6, (SELECT a2.asset_id FROM asset a2 WHERE a2.asset_name = 'HYSA 2'), 2025, 8)
 ;
 
-INSERT INTO earnings (scenario_id, earnings_name, amount, inflation_rate, begin_year, begin_month, end_year, end_month, repeat_every)
+INSERT INTO earnings (scenario_id, earnings_name, amount, inflation_rate, income_type_id, begin_year, begin_month, end_year, end_month, repeat_every)
 VALUES
-  (18, 'Social Security 1',  500.00, 1.500, 2025, 1, 2055, 12, NULL),
-  (18, 'Social Security 2',  500.00, 1.500, 2025, 1, 2055, 12, NULL),
-  (18, 'Some Side Gig',      250.00, 0.000, 2027, 1, 2032,  9, NULL)
+  (18, 'Social Security 1',  500.00, 1.500, 4, 2025, 1, 2055, 12, NULL),
+  (18, 'Social Security 2',  500.00, 1.500, 4, 2025, 1, 2055, 12, NULL),
+  (18, 'Dividends',          500.00, 1.500, 3, 2025, 1, 2055, 12, NULL),
+  (18, 'Pension',            500.00, 1.500, 5, 2025, 1, 2055, 12, NULL),
+  (18, 'Some Side Gig',      250.00, 0.000, 1, 2027, 1, 2032,  9, NULL)
 ;

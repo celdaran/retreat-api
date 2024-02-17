@@ -15,6 +15,14 @@ CREATE TABLE `account_type` (
   `modified_at` timestamp DEFAULT (now())
 );
 
+CREATE TABLE `income_type` (
+  `income_type_id` integer PRIMARY KEY NOT NULL,
+  `income_type_name` varchar(255) UNIQUE NOT NULL,
+  `income_type_descr` varchar(255),
+  `created_at` timestamp DEFAULT (now()),
+  `modified_at` timestamp DEFAULT (now())
+);
+
 CREATE TABLE `expense` (
   `expense_id` integer PRIMARY KEY NOT NULL AUTO_INCREMENT,
   `scenario_id` integer NOT NULL,
@@ -39,7 +47,7 @@ CREATE TABLE `asset` (
   `opening_balance` DECIMAL(13,2) NOT NULL,
   `max_withdrawal` DECIMAL(13,2),
   `apr` DECIMAL(5,3),
-  `taxable` bool,
+  `income_type_id` integer,
   `begin_after` integer,
   `begin_year` integer,
   `begin_month` integer,
@@ -53,7 +61,8 @@ CREATE TABLE `earnings` (
   `earnings_name` varchar(255) NOT NULL,
   `earnings_descr` varchar(255),
   `amount` DECIMAL(13,2) NOT NULL,
-  `inflation_rate` DECIMAL(5,3),
+  `inflation_rate` DECIMAL(5,3) NOT NULL,
+  `income_type_id` integer,
   `begin_year` integer,
   `begin_month` integer,
   `end_year` integer,
@@ -93,7 +102,11 @@ ALTER TABLE `asset` ADD FOREIGN KEY (`scenario_id`) REFERENCES `scenario` (`scen
 
 ALTER TABLE `asset` ADD FOREIGN KEY (`begin_after`) REFERENCES `asset` (`asset_id`);
 
+ALTER TABLE `asset` ADD FOREIGN KEY (`income_type_id`) REFERENCES `income_type` (`income_type_id`);
+
 ALTER TABLE `earnings` ADD FOREIGN KEY (`scenario_id`) REFERENCES `scenario` (`scenario_id`);
+
+ALTER TABLE `earnings` ADD FOREIGN KEY (`income_type_id`) REFERENCES `income_type` (`income_type_id`);
 
 ALTER TABLE `simulation` ADD FOREIGN KEY (`scenario_id__expense`) REFERENCES `scenario` (`scenario_id`);
 
