@@ -4,11 +4,17 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-use App\System\LogFactory;
 use App\Service\Scenario\Scenario as DataScenario;
 
 class Scenario
 {
+    public DataScenario $scenario;
+
+    public function __construct(DataScenario $scenario)
+    {
+        $this->scenario = $scenario;
+    }
+
     /**
      * @param Request $request
      * @return JsonResponse
@@ -23,9 +29,7 @@ class Scenario
         $newScenarioDescr = $body['newScenarioDescr'];
         $oldScenarioId = $body['oldScenarioId'];
 
-        $log = LogFactory::getLogger();
-        $scenario = new DataScenario($log);
-        $scenario->clone($oldScenarioId, $newScenarioName, $newScenarioDescr, 1);
+        $this->scenario->clone($oldScenarioId, $newScenarioName, $newScenarioDescr, 1);
         return new JsonResponse(['msg' => 'Probably succeeded...idk']);
     }
 

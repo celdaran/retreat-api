@@ -23,6 +23,12 @@ class Log
     /** @var array */
     private array $logs;
 
+    public function __construct(string $logLevel, string $logOutput)
+    {
+        $this->setLevel($logLevel);
+        $this->setOutput($logOutput);
+    }
+
     /**
      * @param string $level
      * @return Log

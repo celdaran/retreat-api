@@ -1,9 +1,9 @@
 <?php namespace App\Service\Engine;
 
+use App\System\Database;
+use App\System\Log;
 use Exception;
 
-use App\System\Log;
-use App\System\LogFactory;
 use App\Service\Scenario\ExpenseCollection;
 use App\Service\Scenario\AssetCollection;
 use App\Service\Scenario\EarningsCollection;
@@ -37,18 +37,19 @@ class Engine
         string $assetScenarioName = null,
         string $earningsScenarioName = null)
     {
-        // Instantiate global logger
-        $this->log = LogFactory::getLogger();
-
         // Get scenario names
         $this->expenseScenarioName = $expenseScenarioName;
         $this->assetScenarioName = ($assetScenarioName === null) ? $expenseScenarioName : $assetScenarioName;
         $this->earningsScenarioName = ($earningsScenarioName === null) ? $expenseScenarioName : $earningsScenarioName;
 
+        // TODO: temporary
+        $this->log = new Log($_ENV['LOG_LEVEL'], $_ENV['LOG_OUTPUT']);
+        $database = new Database($this->log, $_ENV['DBHOST'], $_ENV['DBNAME'], $_ENV['DBUSER'], $_ENV['DBPASS']);
+
         // Instantiate main classes
-        $this->expenseCollection = new ExpenseCollection($this->log);
-        $this->assetCollection = new AssetCollection($this->log);
-        $this->earningsCollection = new EarningsCollection($this->log);
+        $this->expenseCollection = new ExpenseCollection($database, $this->log);
+        $this->assetCollection = new AssetCollection($database, $this->log);
+        $this->earningsCollection = new EarningsCollection($database, $this->log);
 
         $this->simulation = [];
 

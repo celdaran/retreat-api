@@ -6,36 +6,28 @@ use PDOStatement;
 
 class Database
 {
-    private ?PDO $dbh;
+    private PDO $dbh;
     private string $lastInsertId;
     private array $lastError;
-    private Log $log;
 
     private string $host;
     private string $name;
     private string $user;
     private string $pass;
 
-    public function __construct(Log $log)
+    public function __construct(Log $log, string $dbHost, string $dbName, string $dbUser, string $dbPass)
     {
-        $this->dbh = null;
         $this->lastInsertId = -1;
         $this->lastError = [];
-        $this->log = $log;
-    }
 
-    public function connect(string $host, string $username, ?string $password, string $database)
-    {
         try {
-            if ($this->dbh === null) {
-                $this->dbh = new PDO("mysql:host=$host;dbname=$database", $username, $password);
-                $this->host = $host;
-                $this->name = $database;
-                $this->user = $username;
-                $this->pass = $password;
-            }
+            $this->dbh = new PDO("mysql:host=$dbHost;dbname=$dbName", $dbUser, $dbPass);
+            $this->host = $dbHost;
+            $this->name = $dbName;
+            $this->user = $dbUser;
+            $this->pass = $dbPass;
         } catch (PDOException $e) {
-            $this->log->error("Error connecting to database: " . $e->getMessage() . "\n");
+            $log->error("Error connecting to database: " . $e->getMessage() . "\n");
         }
     }
 

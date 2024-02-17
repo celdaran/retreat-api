@@ -2,22 +2,29 @@
 
 use PHPUnit\Framework\TestCase;
 
-use App\System\Log;
-use App\System\LogFactory;
 use App\Service\Scenario\ExpenseCollection;
-use App\Service\Engine\Expense;
 use App\Service\Engine\Period;
+use App\Service\Engine\Expense;
 use App\Service\Engine\Money;
+use App\System\Database;
+use App\System\Log;
 
 final class expenseCollectionClassTest extends TestCase
 {
     private static ExpenseCollection $expenseCollection;
+    private static Database $database;
     private static Log $log;
+
+    public function __construct()
+    {
+        self::$log = new Log('DEBUG', 'MEMORY');
+        self::$database = new Database(self::$log, $_ENV['DBHOST'], $_ENV['DBNAME'], $_ENV['DBUSER'], $_ENV['DBPASS']);
+        parent::__construct();
+    }
 
     public static function setUpBeforeClass(): void
     {
-        self::$log = LogFactory::getLogger();
-        self::$expenseCollection = new ExpenseCollection(self::$log);
+        self::$expenseCollection = new ExpenseCollection(self::$database, self::$log);
     }
 
     /**

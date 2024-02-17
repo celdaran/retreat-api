@@ -2,22 +2,29 @@
 
 use PHPUnit\Framework\TestCase;
 
-use App\System\Log;
-use App\System\LogFactory;
 use App\Service\Scenario\AssetCollection;
 use App\Service\Engine\Period;
 use App\Service\Engine\Asset;
 use App\Service\Engine\Money;
+use App\System\Database;
+use App\System\Log;
 
 final class assetCollectionClassTest extends TestCase
 {
     private static AssetCollection $assetCollection;
+    private static Database $database;
     private static Log $log;
+
+    public function __construct()
+    {
+        self::$log = new Log('DEBUG', 'MEMORY');
+        self::$database = new Database(self::$log, $_ENV['DBHOST'], $_ENV['DBNAME'], $_ENV['DBUSER'], $_ENV['DBPASS']);
+        parent::__construct();
+    }
 
     public static function setUpBeforeClass(): void
     {
-        self::$log = LogFactory::getLogger();
-        self::$assetCollection = new AssetCollection(self::$log);
+        self::$assetCollection = new AssetCollection(self::$database, self::$log);
     }
 
     /**

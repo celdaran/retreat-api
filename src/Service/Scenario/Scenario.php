@@ -10,20 +10,13 @@ class Scenario
     protected string $scenarioName;
     protected string $scenarioTable;
 
-    private Database $data;
+    private Database $database;
     private Log $log;
 
-    public function __construct(Log $log)
+    public function __construct(Database $database, Log $log)
     {
+        $this->database = $database;
         $this->log = $log;
-
-        try {
-            $this->data = new Database($this->log);
-            $this->data->connect($_ENV['DBHOST'], $_ENV['DBUSER'], $_ENV['DBPASS'], $_ENV['DBNAME']);
-        } catch (Exception $e) {
-            $this->log->warn($e->getMessage());
-        }
-
     }
 
     public function id(): int
@@ -33,7 +26,7 @@ class Scenario
 
     public function getData(): Database
     {
-        return $this->data;
+        return $this->database;
     }
 
     public function getLog(): Log
@@ -48,7 +41,7 @@ class Scenario
           FROM scenario 
           WHERE scenario_name = :scenarioName
             AND account_type_id = :accountTypeId";
-        $rows = $this->data->select($sql,
+        $rows = $this->database->select($sql,
             ['scenarioName' => $scenarioName, 'accountTypeId' => $accountTypeId]);
         if (count($rows) === 1) {
             return (int)$rows[0]['scenario_id'];
@@ -61,11 +54,11 @@ class Scenario
     {
         // Create new scenario
         $sql = "INSERT INTO scenario (scenario_name, scenario_descr, account_type_id) VALUES (:newScenarioName, :newScenarioDescr, :newAccountType)";
-        $this->data->exec($sql,
+        $this->database->exec($sql,
             ['newScenarioName' => $newScenarioName, 'newScenarioDescr' => $newScenarioDescr, 'newAccountType' => $newAccountType]);
 
         // Fetch new scenario ID
-        $newScenarioId = $this->data->lastInsertId();
+        $newScenarioId = $this->database->lastInsertId();
 
         // Clone scenario
         $sql = "
@@ -74,26 +67,26 @@ class Scenario
             FROM expense
             WHERE scenario_id = :oldScenarioId
         ";
-        $this->data->exec($sql, ['oldScenarioId' => $oldScenarioId, 'newScenarioId' => $newScenarioId]);
+        $this->database->exec($sql, ['oldScenarioId' => $oldScenarioId, 'newScenarioId' => $newScenarioId]);
     }
 
     public function delete(): bool
     {
         $sql = sprintf("DELETE FROM %s WHERE scenario_id = %d", $this->scenarioTable, $this->scenarioId);
-        $this->data->exec($sql);
+        $this->database->exec($sql);
 
         $sql = sprintf("DELETE FROM scenario WHERE scenario_id = %d", $this->scenarioId);
-        $this->data->exec($sql);
+        $this->database->exec($sql);
         return true;
     }
 
     protected function getRowsForScenario(string $scenarioName, string $scenarioType, string $sql): array
     {
         // Get the data
-        $rows = $this->data->select($sql, ['scenario_name' => $scenarioName]);
+        $rows = $this->database->select($sql, ['scenario_name' => $scenarioName]);
 
         if (count($rows) === 0) {
-            $this->getLog()->info('Scenario "' . $scenarioName . '" not found for ' . $scenarioType);
+            $this->log->info('Scenario "' . $scenarioName . '" not found for ' . $scenarioType);
         }
 
         return $rows;
