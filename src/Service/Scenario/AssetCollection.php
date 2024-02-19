@@ -6,6 +6,8 @@ use App\Service\Engine\Asset;
 use App\Service\Engine\Money;
 use App\Service\Engine\Period;
 use App\Service\Engine\Util;
+use App\Service\Engine\Income;
+use App\Service\Engine\IncomeCollection;
 
 class AssetCollection extends Scenario
 {
@@ -74,19 +76,17 @@ class AssetCollection extends Scenario
      * Withdraw money from fund(s) until expense is matched
      * @param Period $period
      * @param Money $expense
-     * @param Money $annualIncome
+     * @param IncomeCollection $incomeCollection
      * @return Money
      */
-    public function makeWithdrawals(Period $period, Money $expense, Money $annualIncome): Money
+    public function makeWithdrawals(Period $period, Money $expense, IncomeCollection $incomeCollection): Money
     {
         $total = new Money();
 
         /** @var Asset $asset */
         foreach ($this->assets as $asset) {
 
-            $this->activateAssets($period);
-
-            if ($asset->isActive()) {
+            if ($this->activateAsset($asset, $period)) {
 
                 // Set withdrawal amount
                 $amount = new Money();
@@ -128,12 +128,16 @@ class AssetCollection extends Scenario
                     $asset->decreaseCurrentBalance($amount->value());
                 }
 
+                $income = new Income($asset->name(), $amount->value(), $asset->incomeType());
+                $incomeCollection->add($income);
+                /*
                 if ($asset->taxable()) {
                     $annualIncome->add($amount->value());
                     $this->getLog()->debug("Increasing annualIncome by amount: " . $amount->formatted());
                 } else {
                     $this->getLog()->debug("annualIncome not increased due to asset being non-taxable");
                 }
+                */
 
                 $msg = sprintf('Current balance of asset "%s" is %s',
                     $asset->name(),
@@ -163,41 +167,51 @@ class AssetCollection extends Scenario
     }
 
     /**
-     * Activate assets per plan
+     * Special case
      */
-    public function activateAssets(Period $period)
+    public function stashSurplus(Money $amount)
     {
         /** @var Asset $asset */
         foreach ($this->assets as $asset) {
-
-            if ($asset->isUntapped()) {
-                if ($asset->beginAfter() !== null) {
-                    $beginAfterAsset = $this->getBeginAfter($asset->beginAfter());
-                    if ($beginAfterAsset->isDepleted()) {
-                        $msg = sprintf('Activating asset "%s", in %4d-%02d, after previous asset depleted',
-                            $asset->name(),
-                            $period->getYear(),
-                            $period->getMonth(),
-                        );
-                        $this->getLog()->debug($msg);
-                        $asset->markActive();
-                    }
-
-                } else {
-                    if ($asset->timeToActivate($period)) {
-                        $msg = sprintf('Activating asset "%s", in %4d-%02d, as planned from the start',
-                            $asset->name(),
-                            $period->getYear(),
-                            $period->getMonth(),
-                        );
-                        $this->getLog()->debug($msg);
-                        $asset->markActive();
-                    }
-                }
+            if ($asset->name() === 'Checking Account') {
+                $asset->increaseCurrentBalance($amount->value(true));
+                return;
             }
         }
     }
 
+    /**
+     * Activate all activatable assets for a period
+     * @param Period $period
+     * @return Asset[]
+     */
+    public function activateAssets(Period $period): array
+    {
+        /** @var Asset[] $assets */
+        $assets = $this->getAssets();
+        foreach ($assets as $asset) {
+            $this->activateAsset($asset, $period);
+        }
+        return $assets;
+    }
+
+    /**
+     * Activate an asset
+     * @param Asset $asset
+     * @param Period $period
+     * @return bool
+     */
+    public function activateAsset(Asset $asset, Period $period): bool
+    {
+        $beginAfterAsset = $this->getBeginAfter($asset->beginAfter());
+        $asset->activate($period, $beginAfterAsset);
+        return $asset->isActive();
+    }
+
+    /**
+     * @param int|null $beginAfter
+     * @return Asset|null
+     */
     private function getBeginAfter(?int $beginAfter): ?Asset
     {
         foreach ($this->assets as $asset) {
@@ -258,6 +272,7 @@ class AssetCollection extends Scenario
                 ->setCurrentBalance(new Money((float)$row['opening_balance']))
                 ->setMaxWithdrawal(new Money((float)$row['max_withdrawal']))
                 ->setApr($row['apr'])
+                ->setIncomeType($row['income_type_id'])
                 ->setBeginAfter($row['begin_after'])
                 ->setBeginYear($row['begin_year'])
                 ->setBeginMonth($row['begin_month'])

@@ -37,9 +37,9 @@ class Money
         $this->setValue($this->value - $this->r($n));
     }
 
-    public function value(): float
+    public function value(bool $negate = false): float
     {
-        return $this->r($this->value);
+        return $this->r(($negate ? -$this->value : $this->value));
     }
 
     public function eq(float $n): bool

@@ -2,27 +2,18 @@
 
 use Exception;
 use Symfony\Component\HttpFoundation\Request;
-use App\Service\Engine\SimulatorResponse;
 
 class Simulator
 {
-    /** @var string */
-    private string $expense;
+    /** @var SimulationParameters */
+    private SimulationParameters $simulationParameters;
 
-    /** @var string */
-    private string $asset;
+    private Engine $engine;
 
-    /** @var string */
-    private string $earnings;
-
-    /** @var int */
-    private int $periods;
-
-    /** @var int */
-    private int $startYear;
-
-    /** @var int */
-    private int $startMonth;
+    public function __construct(Engine $engine)
+    {
+        $this->engine = $engine;
+    }
 
     /**
      * @return SimulatorResponse
@@ -176,12 +167,16 @@ class Simulator
         int $startYear,
         int $startMonth)
     {
-        $this->expense = $expense;
-        $this->asset = $asset;
-        $this->earnings = $earnings;
-        $this->periods = $periods;
-        $this->startYear = $startYear;
-        $this->startMonth = $startMonth;
+        $until = new Until();
+        $until->setPeriods($periods);
+        $this->simulationParameters = new SimulationParameters(
+            $expense,
+            $asset,
+            $earnings,
+            $until,
+            $startYear,
+            $startMonth,
+        );
     }
 
     /**
@@ -192,18 +187,11 @@ class Simulator
      */
     private function runSimulation(): SimulatorResponse
     {
-        $engine = new Engine(
-            $this->expense,
-            $this->asset,
-            $this->earnings
-        );
-        $until = new Until();
-        $until->setPeriods($this->periods);
+        $success = $this->engine->run($this->simulationParameters);
 
-        $success = $engine->run($until, $this->startYear, $this->startMonth);
-        $simulation = $engine->getSimulation();
-        $logs = $engine->getLogs();
-        $audit = $engine->getAudit();
+        $simulation = $this->engine->getSimulation();
+        $logs = $this->engine->getLogs();
+        $audit = $this->engine->getAudit();
 
         return new SimulatorResponse($success, $simulation, $logs, $audit);
     }

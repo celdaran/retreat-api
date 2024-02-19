@@ -35,7 +35,7 @@ class Report
                 $line .= sprintf('"%s",', addslashes($expenseName));
             }
         }
-        $line .= '"total expenses","agi","income tax",,';
+        $line .= '"total expenses","income","income tax",,';
 
         // Earnings
         if (count($p['earnings']) > 0) {
@@ -73,7 +73,7 @@ class Report
             $line .= sprintf('%.2f,', $expense);
             $totalExpenses += $expense;
         }
-        $line .= sprintf('%.2f,%.2f,%.2f,,', $totalExpenses, $p['agi'], $p['incomeTax']);
+        $line .= sprintf('%.2f,%.2f,%.2f,,', $totalExpenses, $p['income'], $p['incomeTax']);
 
         // Earnings
         foreach ($p['earnings'] as $earnings) {

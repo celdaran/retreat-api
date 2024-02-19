@@ -2,29 +2,27 @@
 
 use PHPUnit\Framework\TestCase;
 
+use App\System\Database;
+use App\System\Log;
 use App\Service\Scenario\AssetCollection;
+use App\Service\Engine\IncomeCollection;
 use App\Service\Engine\Period;
 use App\Service\Engine\Asset;
 use App\Service\Engine\Money;
-use App\System\Database;
-use App\System\Log;
 
 final class assetCollectionClassTest extends TestCase
 {
     private static AssetCollection $assetCollection;
+    private static IncomeCollection $incomeCollection;
     private static Database $database;
     private static Log $log;
 
-    public function __construct()
+    public static function setUpBeforeClass(): void
     {
         self::$log = new Log('DEBUG', 'MEMORY');
         self::$database = new Database(self::$log, $_ENV['DBHOST'], $_ENV['DBNAME'], $_ENV['DBUSER'], $_ENV['DBPASS']);
-        parent::__construct();
-    }
-
-    public static function setUpBeforeClass(): void
-    {
         self::$assetCollection = new AssetCollection(self::$database, self::$log);
+        self::$incomeCollection = new IncomeCollection(self::$log);
     }
 
     /**
@@ -95,9 +93,7 @@ final class assetCollectionClassTest extends TestCase
 
         for ($i = 0; $i < 36; $i++) {
             // Activate assets for current period
-            self::$assetCollection->activateAssets($period);
-            /** @var Asset[] $assets */
-            $assets = self::$assetCollection->getAssets();
+            $assets = self::$assetCollection->activateAssets($period);
 
             // Test that it becomes active at the right time
             if (($period->getYear() >= 2025) && ($period->getMonth() >= 1)) {
@@ -122,9 +118,7 @@ final class assetCollectionClassTest extends TestCase
 
         for ($i = 0; $i < 36; $i++) {
             // Activate assets for current period
-            self::$assetCollection->activateAssets($period);
-            /** @var Asset[] $assets */
-            $assets = self::$assetCollection->getAssets();
+            $assets = self::$assetCollection->activateAssets($period);
 
             // Test that it never becomes active. Because asset #2
             // is scheduled for activation only when asset #1 depletes,
@@ -146,9 +140,7 @@ final class assetCollectionClassTest extends TestCase
 
         for ($i = 0; $i < 24; $i++) {
             // Activate assets for current period
-            self::$assetCollection->activateAssets($period);
-            /** @var Asset[] $assets */
-            $assets = self::$assetCollection->getAssets();
+            $assets = self::$assetCollection->activateAssets($period);
 
             if ($assets[0]->currentBalance()->ge(100.00) && $assets[0]->isActive()) {
                 $assets[0]->decreaseCurrentBalance(100.00);
@@ -174,9 +166,7 @@ final class assetCollectionClassTest extends TestCase
 
         for ($i = 0; $i < 24; $i++) {
             // Activate assets for current period
-            self::$assetCollection->activateAssets($period);
-            /** @var Asset[] $assets */
-            $assets = self::$assetCollection->getAssets();
+            $assets = self::$assetCollection->activateAssets($period);
 
             if ($assets[0]->currentBalance()->ge(100.00) && ($assets[0]->isActive())) {
                 $assets[0]->decreaseCurrentBalance(100.00);
@@ -289,45 +279,47 @@ final class assetCollectionClassTest extends TestCase
         $period = new Period(2025, 1);
         $expense = new Money(50.00);
         $expected = new Money(50.00);
-        $agi = new Money(0.00);
 
         self::$assetCollection->activateAssets($period);
 
         //-------------------------
 
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
 
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
         $this->assertEquals(950.00, $assets[0]->currentBalance()->value());
-        // TODO: add $taxable flag to assets (e.g., Roth IRAs are not taxable)
-        $this->assertEquals(50.00, $agi->value());
+        $this->assertEquals(50.00, self::$incomeCollection->value());
 
         //-------------------------
 
         $period->advance();
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
 
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
         $this->assertEquals(900.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(100.00, $agi->value());
+        $this->assertEquals(100.00, self::$incomeCollection->value());
 
         //-------------------------
 
         $period->advance();
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
 
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
         $this->assertEquals(850.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(150.00, $agi->value());
+        $this->assertEquals(150.00, self::$incomeCollection->value());
+
+        //-------------------------
+
+        self::$incomeCollection->reset();
     }
 
     /**
@@ -340,13 +332,12 @@ final class assetCollectionClassTest extends TestCase
         $period = new Period(2025, 1);
         $expense = new Money(100.00);
         $expected = new Money(100.00);
-        $agi = new Money(0.00);
 
         self::$assetCollection->activateAssets($period);
 
         //-------------------------
 
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
 
         /** @var Asset[] $assets */
@@ -354,12 +345,12 @@ final class assetCollectionClassTest extends TestCase
 
         $this->assertEquals(400.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(100.00, $agi->value());
+        $this->assertEquals(100.00, self::$incomeCollection->value());
 
         //-------------------------
 
         $period->advance();
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
 
         /** @var Asset[] $assets */
@@ -367,12 +358,12 @@ final class assetCollectionClassTest extends TestCase
 
         $this->assertEquals(300.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(200.00, $agi->value());
+        $this->assertEquals(200.00, self::$incomeCollection->value());
 
         //-------------------------
 
         $period->advance();
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
 
         /** @var Asset[] $assets */
@@ -380,12 +371,12 @@ final class assetCollectionClassTest extends TestCase
 
         $this->assertEquals(200.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(300.00, $agi->value());
+        $this->assertEquals(300.00, self::$incomeCollection->value());
 
         //-------------------------
 
         $period->advance();
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
 
         /** @var Asset[] $assets */
@@ -393,12 +384,12 @@ final class assetCollectionClassTest extends TestCase
 
         $this->assertEquals(100.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(400.00, $agi->value());
+        $this->assertEquals(400.00, self::$incomeCollection->value());
 
         //-------------------------
 
         $period->advance();
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
 
         /** @var Asset[] $assets */
@@ -406,12 +397,12 @@ final class assetCollectionClassTest extends TestCase
 
         $this->assertEquals(0.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(500.00, $agi->value());
+        $this->assertEquals(500.00, self::$incomeCollection->value());
 
         //-------------------------
 
         $period->advance();
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
 
         /** @var Asset[] $assets */
@@ -419,7 +410,11 @@ final class assetCollectionClassTest extends TestCase
 
         $this->assertEquals(0.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(900.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(600.00, $agi->value());
+        $this->assertEquals(600.00, self::$incomeCollection->value());
+
+        //-------------------------
+
+        self::$incomeCollection->reset();
     }
 
     /**
@@ -431,13 +426,12 @@ final class assetCollectionClassTest extends TestCase
 
         $period = new Period(2025, 1);
         $expense = new Money(500.00);
-        $agi = new Money(0.00);
 
         self::$assetCollection->activateAssets($period);
 
         //-------------------------
 
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $expected = new Money(100.00);
         $this->assertEquals($expected, $actual);
         $lastLog = $this->getLastLog();
@@ -449,12 +443,12 @@ final class assetCollectionClassTest extends TestCase
         $this->assertEquals(200.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(300.00, $assets[1]->currentBalance()->value());
         $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals(100.00, $agi->value());
+        $this->assertEquals(100.00, self::$incomeCollection->value());
 
         //-------------------------
 
         $period->advance();
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
         $lastLog = $this->getLastLog();
         $this->assertStringContainsString("Insufficient funds", $lastLog);
@@ -465,7 +459,7 @@ final class assetCollectionClassTest extends TestCase
         $this->assertEquals(100.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(300.00, $assets[1]->currentBalance()->value());
         $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals(200.00, $agi->value());
+        $this->assertEquals(200.00, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -474,7 +468,7 @@ final class assetCollectionClassTest extends TestCase
         // So we pull $200 instead of $100, but that's still shy of the
         // $500 needed for this month
         $expected->assign(200.00);
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
         $lastLog = $this->getLastLog();
         $this->assertStringContainsString("Insufficient funds", $lastLog);
@@ -485,7 +479,7 @@ final class assetCollectionClassTest extends TestCase
         $this->assertEquals(  0.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(200.00, $assets[1]->currentBalance()->value());
         $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals(400.00, $agi->value());
+        $this->assertEquals(400.00, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -493,7 +487,7 @@ final class assetCollectionClassTest extends TestCase
         // In the fourth period, Asset 1 is drained and Asset 2 is still
         // active. But we're back to only getting $100 total for the month
         $expected->assign(100.00);
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
         $lastLog = $this->getLastLog();
         $this->assertStringContainsString("Insufficient funds", $lastLog);
@@ -504,22 +498,22 @@ final class assetCollectionClassTest extends TestCase
         $this->assertEquals(  0.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(100.00, $assets[1]->currentBalance()->value());
         $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals(500.00, $agi->value());
+        $this->assertEquals(500.00, self::$incomeCollection->value());
 
         //-------------------------
 
         $period->advance();
-        self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $period->advance();
-        self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $period->advance();
-        self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $period->advance();
-        self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $period->advance();
         // Skipping ahead to the ninth period...
         $expected->assign(100.00);
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
         $lastLog = $this->getLastLog();
         $this->assertStringContainsString("Insufficient funds", $lastLog);
@@ -530,7 +524,11 @@ final class assetCollectionClassTest extends TestCase
         $this->assertEquals(   0.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(   0.00, $assets[1]->currentBalance()->value());
         $this->assertEquals( 100.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals(1100.00, $agi->value());
+        $this->assertEquals(1100.00, self::$incomeCollection->value());
+
+        //-------------------------
+
+        self::$incomeCollection->reset();
     }
 
     /**
@@ -545,13 +543,12 @@ final class assetCollectionClassTest extends TestCase
         $period = new Period(2025, 1);
         $expense = new Money(500.00);
         $expected = new Money(500.00);
-        $agi = new Money(0.00);
 
         self::$assetCollection->activateAssets($period);
 
         //-------------------------
 
-        $actual = self::$assetCollection->makeWithdrawals($period, $expense, $agi);
+        $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
 
         /** @var Asset[] $assets */
@@ -560,7 +557,7 @@ final class assetCollectionClassTest extends TestCase
         $this->assertEquals( 900.00, $assets[0]->currentBalance()->value());
         $this->assertEquals(1800.00, $assets[1]->currentBalance()->value());
         $this->assertEquals(2800.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals( 500.00, $agi->value());
+        $this->assertEquals( 500.00, self::$incomeCollection->value());
 
         self::$assetCollection->earnInterest();
 
@@ -570,6 +567,10 @@ final class assetCollectionClassTest extends TestCase
         $this->assertEquals( 901.50, $assets[0]->currentBalance()->value());
         $this->assertEquals(1807.50, $assets[1]->currentBalance()->value());
         $this->assertEquals(2823.33, $assets[2]->currentBalance()->value());
+
+        //-------------------------
+
+        self::$incomeCollection->reset();
     }
 
     /**

@@ -6,10 +6,11 @@ use App\Service\Reporting\Report;
 
 trait BaseCommandTrait
 {
-    protected function initSimulation(): Simulator
+    private Simulator $simulator;
+
+    protected function initSimulation()
     {
-        $simulator = new Simulator();
-        $simulator->setParameters(
+        $this->simulator->setParameters(
             'Default',
             'Default',
             'Default',
@@ -17,7 +18,6 @@ trait BaseCommandTrait
             2025,
             1,
         );
-        return $simulator;
     }
 
     protected function processSimulation(SimulatorResponse $response): int

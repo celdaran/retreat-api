@@ -1,78 +1,53 @@
 <?php namespace App\Service\Engine;
 
-use App\System\Database;
-use App\System\Log;
 use Exception;
 
 use App\Service\Scenario\ExpenseCollection;
 use App\Service\Scenario\AssetCollection;
 use App\Service\Scenario\EarningsCollection;
+use App\System\Log;
 
 class Engine
 {
-    private string $expenseScenarioName;
-    private string $assetScenarioName;
-    private string $earningsScenarioName;
-
     private ExpenseCollection $expenseCollection;
     private AssetCollection $assetCollection;
     private EarningsCollection $earningsCollection;
-
-    private array $simulation;
-    private array $audit;
+    private IncomeCollection $incomeCollection;
 
     private Log $log;
 
     private Period $currentPeriod;
-    private Money $annualIncome;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-    /**
-     * Constructor
-     * Optionally pass in asset and/or expense scenario names and this
-     * method preps the engine for running a simulation and rendering
-     * the results.
-     */
+    private array $simulation;
+    private array $audit;
+
     public function __construct(
-        string $expenseScenarioName = 'base',
-        string $assetScenarioName = null,
-        string $earningsScenarioName = null)
+        ExpenseCollection  $expenseCollection,
+        AssetCollection    $assetCollection,
+        EarningsCollection $earningsCollection,
+        IncomeCollection   $incomeCollection,
+        Log                $log,
+    )
     {
-        // Get scenario names
-        $this->expenseScenarioName = $expenseScenarioName;
-        $this->assetScenarioName = ($assetScenarioName === null) ? $expenseScenarioName : $assetScenarioName;
-        $this->earningsScenarioName = ($earningsScenarioName === null) ? $expenseScenarioName : $earningsScenarioName;
-
-        // TODO: temporary
-        $this->log = new Log($_ENV['LOG_LEVEL'], $_ENV['LOG_OUTPUT']);
-        $database = new Database($this->log, $_ENV['DBHOST'], $_ENV['DBNAME'], $_ENV['DBUSER'], $_ENV['DBPASS']);
-
-        // Instantiate main classes
-        $this->expenseCollection = new ExpenseCollection($database, $this->log);
-        $this->assetCollection = new AssetCollection($database, $this->log);
-        $this->earningsCollection = new EarningsCollection($database, $this->log);
-
-        $this->simulation = [];
-
-        $this->annualIncome = new Money();
-
-        $this->audit = [
-            'expense' => [],
-            'asset' => [],
-            'earnings' => [],
-        ];
+        $this->expenseCollection = $expenseCollection;
+        $this->assetCollection = $assetCollection;
+        $this->earningsCollection = $earningsCollection;
+        $this->incomeCollection = $incomeCollection;
+        $this->log = $log;
     }
 
     /**
      * Core function of the engine: to take all inputs and generate a simulation
      * @throws Exception
      */
-    public function run(Until $until, ?int $startYear = null, ?int $startMonth = null): bool
+    public function run(SimulationParameters $simulationParameters): bool
     {
+        // Initialize simulation
+        $this->initialize();
+
         // Load scenarios
-        // A "scenario" is an array of like items (an array of expenses, array of assets)
-        $this->expenseCollection->loadScenario($this->expenseScenarioName);
-        $this->assetCollection->loadScenario($this->assetScenarioName);
-        $this->earningsCollection->loadScenario($this->earningsScenarioName);
+        $this->expenseCollection->loadScenario($simulationParameters->getExpense());
+        $this->assetCollection->loadScenario($simulationParameters->getAsset());
+        $this->earningsCollection->loadScenario($simulationParameters->getEarnings());
 
         if ($this->assetCollection->count() === 0 && $this->earningsCollection->count() === 0) {
             $msg = "No income sources found. Must specify assets, earnings or both.";
@@ -81,19 +56,22 @@ class Engine
         }
 
         // Track period (year and month)
-        $this->currentPeriod = $this->expenseCollection->getStart($startYear, $startMonth);
+        $this->currentPeriod = $this->expenseCollection->getStart(
+            $simulationParameters->getStartYear(),
+            $simulationParameters->getStartMonth()
+        );
 
         $this->log->debug("Simulation parameters:");
-        $this->log->debug(sprintf("  Expense scenario: %s", $this->expenseScenarioName));
-        $this->log->debug(sprintf("  Asset scenario: %s", $this->assetScenarioName));
-        $this->log->debug(sprintf("  Earnings scenario: %s", $this->earningsScenarioName));
-        $this->log->debug(sprintf("  Until: %s", $until->toString()));
+        $this->log->debug(sprintf("  Expense scenario: %s", $simulationParameters->getExpense()));
+        $this->log->debug(sprintf("  Asset scenario: %s", $simulationParameters->getAsset()));
+        $this->log->debug(sprintf("  Earnings scenario: %s", $simulationParameters->getEarnings()));
+        $this->log->debug(sprintf("  Until: %s", $simulationParameters->getUntil()->toString()));
         $this->log->debug(sprintf("  Start Year: %d", $this->currentPeriod->getYear()));
         $this->log->debug(sprintf("  Start Month: %d", $this->currentPeriod->getMonth()));
 
         // Loop until we've satisfied our run time
         $shortfall = new Money();
-        while ($until->unsatisfied($this->currentPeriod, $shortfall)) {
+        while ($simulationParameters->getUntil()->unsatisfied($this->currentPeriod, $shortfall)) {
 
             $this->log->debug(sprintf("-- PERIOD: %d (%04d-%02d) --------------------------------------------- ",
                 $this->currentPeriod->getCurrentPeriod(),
@@ -121,25 +99,32 @@ class Engine
             // e.g., I have $2000 in expenses this month
             $expense = $this->getExpensesForPeriod();
 
-            // Find earnings
+            // Tally up earnings, if any
             // e.g., I have a side job which brings in $250 per month
             $earnings = $this->getEarningsForPeriod();
 
-            // If earnings doesn't cover it, pull from assets
+            // If earnings don't cover it, pull balance from assets
             // e.g., I now need to pull $1750 from assets to cover expenses
-            [$withdrawals, $shortfall] = $this->adjustAssetForPeriod($expense, $earnings);
+            $shortfall = $this->getShortfall($expense, $earnings);
+            $withdrawals = $this->getAssetsForPeriod($shortfall);
 
-            // Log annual income at this step
-            $step['agi'] = $this->annualIncome->value();
+            // Log income before (potentially) zeroed out
+            $step['income'] = $this->incomeCollection->value();
 
-            // Deal with income taxes
-            $incomeTax = $this->payIncomeTax($expense);
+            // Pay tax burden
+            $incomeTax = $this->incomeCollection->payIncomeTax($this->currentPeriod);
+            $step['incomeTax'] = $incomeTax;
 
-            // Lastly amend the simulation
+            // Pull 100% of tax payments from assets (this was the BIG BUG discovered the weekend of 2/16/2024)
+            $this->getAssetsForPeriod(new Money($incomeTax));
+
+            // Calculate interest and inflation for everything
+            $this->applyPeriodAdjustments();
+
+            // Lastly amend the simulation with current step info
             $step['expense'] = $expense->value();
             $step['withdrawals'] = $withdrawals->value();
             $step['shortfall'] = $shortfall->value();
-            $step['incomeTax'] = $incomeTax->value();
             $this->simulation[] = $step;
 
             // Next period
@@ -195,11 +180,32 @@ class Engine
     // Private functions
     //------------------------------------------------------------------
 
+    private function initialize()
+    {
+        // Initialize simulation
+        $this->simulation = [];
+
+        // Initialize audit
+        $this->audit = [
+            'expense' => [],
+            'asset' => [],
+            'earnings' => [],
+        ];
+    }
+
+    private function getShortfall(Money $expense, Money $earnings): Money
+    {
+        $shortfall = new Money();
+        $shortfall->assign($expense->value());
+        $shortfall->subtract($earnings->value());
+        return $shortfall;
+    }
+
     private function appendToAudit()
     {
         $this->audit['expense'][] = $this->expenseCollection->auditExpenses($this->currentPeriod);
-        $this->audit['asset'][]   = $this->assetCollection->auditAssets($this->currentPeriod);
-        $this->audit['earnings'][]  = $this->earningsCollection->auditEarnings($this->currentPeriod);
+        $this->audit['asset'][] = $this->assetCollection->auditAssets($this->currentPeriod);
+        $this->audit['earnings'][] = $this->earningsCollection->auditEarnings($this->currentPeriod);
     }
 
     /**
@@ -210,18 +216,12 @@ class Engine
      */
     private function getExpensesForPeriod(): Money
     {
-        $expenses = $this->expenseCollection->tallyExpenses($this->currentPeriod);
-        $this->expenseCollection->applyInflation();
-        return $expenses;
+        return $this->expenseCollection->tallyExpenses($this->currentPeriod);
     }
 
     private function getEarningsForPeriod(): Money
     {
-        $earnings = $this->earningsCollection->tallyEarnings($this->currentPeriod);
-        $this->earningsCollection->applyInflation();
-        $this->annualIncome->add($earnings->value());
-        $this->log->debug("Increasing annualIncome by amount: " . $earnings->formatted());
-        return $earnings;
+        return $this->earningsCollection->tallyEarnings($this->currentPeriod, $this->incomeCollection);
     }
 
     /**
@@ -232,65 +232,45 @@ class Engine
      *
      * @throws Exception
      */
-    private function adjustAssetForPeriod(Money $expense, Money $earnings): array
+    private function getAssetsForPeriod(Money $amount): Money
     {
-        $shortfall = new Money();
-
-        // If earnings don't cover expenses, then we need to
-        // dip into our assets. Skip over this if earnings are
-        // enough to cover assets and continue with interest
-        if ($earnings->le($expense->value())) {
-            $shortfall->assign($expense->value());
-            $shortfall->subtract($earnings->value());
-            $withdrawals = $this->assetCollection->makeWithdrawals($this->currentPeriod, $shortfall, $this->annualIncome);
-        } else {
-            $withdrawals = new Money();
+        if ($amount->eq(0.00)) {
+            // Stop here and return: we hit breakeven
+            return new Money();
         }
+
+        if ($amount->lt(0.00)) {
+            // But if it's less, then we need to make a deposit
+            $this->assetCollection->stashSurplus($amount);
+            return new Money();
+        }
+
+        // Make withdrawals
+        $withdrawals = $this->assetCollection->makeWithdrawals(
+            $this->currentPeriod,
+            $amount,
+            $this->incomeCollection,
+        );
+
+        // If we covered our amount, zero it out
+        if ($withdrawals->ge($amount->value())) {
+            $amount->assign(0.00);
+        }
+
+        return $withdrawals;
+    }
+
+    private function applyPeriodAdjustments()
+    {
+        // Expenses go up (or, rarely, down)
+        $this->expenseCollection->applyInflation();
+
+        // Earnings also go up (hopefully!)
+        $this->earningsCollection->applyInflation();
 
         // Assets gain value at the end of each period
         $this->assetCollection->earnInterest();
-
-        if ($withdrawals->value() >= $shortfall->value()) {
-            $shortfall->assign(0.00);
-        }
-
-        return [$withdrawals, $shortfall];
     }
 
-    private function payIncomeTax(Money $expense): Money
-    {
-        // Our monthly expenses will be met by income from earnings and asset sales
-        // But that entire figure is not subject to income tax and there are a myriad
-        // of conditions that are needed to come up with an accurate figure.
-        // BUT for the sake of a simulation, we'll just come up with a something
-        // and call that AGI
-
-        // Spit this out each period, regardless of whether we pay or not
-        $this->log->debug("Annual income in period {$this->currentPeriod->getCurrentPeriod()} is {$this->annualIncome->formatted()}");
-
-        $incomeTax = new Money();
-
-        // If we're in the fourth period, calculate taxes
-        // Note: this has issues. But it's good enough
-        if ($this->currentPeriod->getCurrentPeriod() % 12 === 4) {
-            if ($this->annualIncome->value() > 0.00) {
-                $tax = Util::calculateIncomeTax($this->annualIncome->value(), $this->currentPeriod->getYear());
-                $expense->add($tax);
-                $effectiveTaxRate = ($tax / $this->annualIncome->value()) * 100;
-                $msg = sprintf("Paying income tax of %0.2f in period %d (effective tax rate: %0.1f%%)",
-                    $tax,
-                    $this->currentPeriod->getCurrentPeriod(),
-                    $effectiveTaxRate
-                );
-                $this->log->debug($msg);
-                $this->annualIncome->assign(0.00);
-                $incomeTax->assign($tax);
-            } else {
-                $this->log->warn("Annual income was 0.00");
-            }
-        }
-
-        return $incomeTax;
-    }
 
 }

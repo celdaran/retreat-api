@@ -1,11 +1,13 @@
 <?php namespace App\Service\Scenario;
 
+use App\Service\Engine\IncomeCollection;
 use Exception;
 
 use App\Service\Engine\Earnings;
 use App\Service\Engine\Money;
 use App\Service\Engine\Period;
 use App\Service\Engine\Util;
+use App\Service\Engine\Income;
 
 class EarningsCollection extends Scenario
 {
@@ -87,19 +89,35 @@ class EarningsCollection extends Scenario
 
     }
 
-    public function tallyEarnings(Period $period): Money
+    public function tallyEarnings(Period $period, IncomeCollection $incomeCollection): Money
     {
-        // First, get amounts, drawing from every participating earnings
+        // Initialize total earnings
         $total = new Money();
+
+        // First, get amounts, drawing from every participating earnings
+        /** @var Earnings $earnings */
         foreach ($this->earnings as $earnings) {
+
+            // If it's active, then process
             if ($earnings->isActive()) {
+
+                // Add to the running total
+                $total->add($earnings->amount()->value());
+
+                // Log it
                 $msg = sprintf('Adding earnings "%s", amount %s to period %s tally',
                     $earnings->name(),
                     $earnings->amount()->formatted(),
                     $period->getCurrentPeriod(),
                 );
                 $this->getLog()->debug($msg);
-                $total->add($earnings->amount()->value());
+
+                // Add to income collection
+                $income = new Income($earnings->name(), $earnings->amount()->value(), $earnings->incomeType());
+
+                // $this->log->debug("Increasing annualIncome by amount: " . $earnings->formatted());
+                $incomeCollection->add($income);
+
             }
         }
 
@@ -191,6 +209,7 @@ class EarningsCollection extends Scenario
                 ->setName($row['earnings_name'])
                 ->setAmount(new Money((float)$row['amount']))
                 ->setInflationRate($row['inflation_rate'])
+                ->setIncomeType($row['income_type_id'])
                 ->setBeginYear($row['begin_year'])
                 ->setBeginMonth($row['begin_month'])
                 ->setEndYear($row['end_year'])

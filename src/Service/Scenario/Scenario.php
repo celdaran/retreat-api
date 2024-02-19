@@ -1,6 +1,5 @@
 <?php namespace App\Service\Scenario;
 
-use Exception;
 use App\System\Log;
 use App\System\Database;
 

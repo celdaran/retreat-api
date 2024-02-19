@@ -17,7 +17,7 @@ class Asset
     protected Money $currentBalance;
     protected Money $maxWithdrawal;
     protected float $apr;
-    protected bool $taxable;
+    protected int $incomeType;
     protected ?int $beginAfter;
     protected ?int $beginYear;
     protected ?int $beginMonth;
@@ -26,7 +26,6 @@ class Asset
     public function __construct()
     {
         $this->status = self::UNTAPPED;
-        $this->taxable = true;
     }
 
     //--------------------------------------------
@@ -93,9 +92,9 @@ class Asset
         return $this;
     }
 
-    public function setTaxable(bool $taxable): Asset
+    public function setIncomeType(int $incomeType): Asset
     {
-        $this->taxable = $taxable;
+        $this->incomeType = $incomeType;
         return $this;
     }
 
@@ -170,9 +169,9 @@ class Asset
         return $this->apr;
     }
 
-    public function taxable(): bool
+    public function incomeType(): int
     {
-        return $this->taxable;
+        return $this->incomeType;
     }
 
     public function beginAfter(): ?int
@@ -218,6 +217,43 @@ class Asset
     //--------------------------------------------
     // Logic
     //--------------------------------------------
+
+    /**
+     * Activate an asset
+     * @param Period $period
+     * @param ?Asset $beginAfterAsset
+     */
+    public function activate(Period $period, ?Asset $beginAfterAsset = null)
+    {
+        if ($this->isUntapped()) {
+            if ($beginAfterAsset !== null) {
+                if ($beginAfterAsset->isDepleted()) {
+                    /*
+                    $msg = sprintf('Activating asset "%s", in %4d-%02d, after previous asset depleted',
+                        $this->name(),
+                        $period->getYear(),
+                        $period->getMonth(),
+                    );
+                    $this->getLog()->debug($msg);
+                    */
+                    $this->markActive();
+                }
+
+            } else {
+                if ($this->timeToActivate($period)) {
+                    /*
+                    $msg = sprintf('Activating asset "%s", in %4d-%02d, as planned from the start',
+                        $this->name(),
+                        $period->getYear(),
+                        $period->getMonth(),
+                    );
+                    $this->getLog()->debug($msg);
+                    */
+                    $this->markActive();
+                }
+            }
+        }
+    }
 
     public function canEarnInterest(): bool
     {

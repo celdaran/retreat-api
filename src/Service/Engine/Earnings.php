@@ -13,6 +13,7 @@ class Earnings
     protected string $name;
     protected Money $amount;
     protected float $inflationRate;
+    protected ?int $incomeType;
     protected ?int $beginYear;
     protected ?int $beginMonth;
     protected ?int $endYear;
@@ -50,6 +51,12 @@ class Earnings
     public function setInflationRate(float $inflationRate): Earnings
     {
         $this->inflationRate = round($inflationRate, 3);
+        return $this;
+    }
+
+    public function setIncomeType(int $incomeType): Earnings
+    {
+        $this->incomeType = $incomeType;
         return $this;
     }
 
@@ -118,6 +125,11 @@ class Earnings
     public function inflationRate(): float
     {
         return $this->inflationRate;
+    }
+
+    public function incomeType(): int
+    {
+        return $this->incomeType;
     }
 
     public function beginYear(): int
