@@ -6,7 +6,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 use App\Service\Engine\Simulator;
 
-class Simulation
+class SimulationController
 {
     /** @var Simulator */
     private Simulator $simulator;

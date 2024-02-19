@@ -4,13 +4,13 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-use App\Service\Scenario\Scenario as DataScenario;
+use App\Service\Scenario\Scenario;
 
-class Scenario
+class ScenarioController
 {
-    public DataScenario $scenario;
+    public Scenario $scenario;
 
-    public function __construct(DataScenario $scenario)
+    public function __construct(Scenario $scenario)
     {
         $this->scenario = $scenario;
     }

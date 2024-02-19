@@ -3,7 +3,7 @@
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
-class Version extends JsonResponse
+class VersionController
 {
     #[Route('/version', methods: ['GET'])]
     public function version(): JsonResponse {

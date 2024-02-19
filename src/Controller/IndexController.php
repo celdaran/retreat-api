@@ -3,7 +3,7 @@
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-class Index extends Response
+class IndexController
 {
     #[Route('/', methods: ['GET'])]
     public function index(): Response {
