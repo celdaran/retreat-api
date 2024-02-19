@@ -44,6 +44,7 @@ CREATE TABLE `asset` (
   `scenario_id` integer NOT NULL,
   `asset_name` varchar(255) NOT NULL,
   `asset_descr` varchar(255),
+  `priority` integer,
   `opening_balance` DECIMAL(13,2) NOT NULL,
   `max_withdrawal` DECIMAL(13,2),
   `apr` DECIMAL(5,3),
