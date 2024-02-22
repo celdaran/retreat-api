@@ -36,6 +36,15 @@ class IncomeCollection
         return $this->sum()->value();
     }
 
+    /**
+     * @return float
+     */
+    public function taxableValue(int $year): float
+    {
+        $grossIncome = $this->sum()->value();
+        return round($grossIncome - $this->getStandardDeduction($year), 2);
+    }
+
     public function reset()
     {
         unset($this->incomes);
@@ -78,6 +87,72 @@ class IncomeCollection
     }
 
     /**
+     * @param int $year
+     * @param ?int $taxEngine
+     * @return float
+     */
+    private function calculateIncomeTax(int $year, ?int $taxEngine): float
+    {
+        // Initialize tax owed
+        $taxOwed = 0.00;
+
+        // Summarize incomes by type
+        $incomeSummary = [];
+        /** @var Income $income */
+        foreach ($this->incomes as $income) {
+            if (array_key_exists($income->getType(), $incomeSummary)) {
+                $incomeSummary[$income->getType()] += $income->getAmount();
+            } else {
+                $incomeSummary[$income->getType()] = $income->getAmount();
+            }
+        }
+
+        if ($taxEngine === 1) {
+            // USE THIS PATH TO SIMULATE A GLOBAL/PERPETUAL EFT
+            foreach ($incomeSummary as $incomeType => $incomeAmount) {
+                $taxOwed += $incomeAmount;
+            }
+            // TODO: set this percentage somewhere...
+            $taxOwed = round($taxOwed * 0.15);
+        }
+
+        if ($taxEngine === 2) {
+            // Preprocessor
+            foreach ($incomeSummary as $incomeType => $incomeAmount) {
+                switch ($incomeType) {
+                    case Income::SSA:
+                        // 85% of SSA benefits are taxable income
+                        $incomeSummary[Income::SSA] *= 0.85;
+                        break;
+                }
+            }
+
+            // Final loop
+            foreach ($incomeSummary as $incomeType => $incomeAmount) {
+                switch ($incomeType) {
+                    case Income::NONTAXABLE:
+                        $taxOwed += 0.00;
+                        break;
+                    case Income::WAGE:
+                    case Income::INTEREST:
+                    case Income::RETIREMENT:
+                    case Income::SSA:
+                        $taxOwed += $this->calculateOrdinaryIncomeTax($incomeAmount, $year);
+                        break;
+                    case Income::DIVIDEND:
+                        $taxOwed += $this->calculateDividendIncomeTax($incomeAmount, $year);
+                        break;
+                    case Income::INVESTMENT:
+                        $taxOwed += $this->calculateInvestmentIncomeTax($incomeAmount, $year);
+                        break;
+                }
+            }
+        }
+
+        return $taxOwed;
+    }
+
+    /**
      * calculateIncomeTax
      *
      * This function takes an income amount and year and returns
@@ -94,18 +169,12 @@ class IncomeCollection
      *
      * Note: This assumes standard deduction.
      *
+     * @param float $income
      * @param int $year
      * @return float
      */
-    private function calculateIncomeTax(int $year): float
+    private function calculateOrdinaryIncomeTax(float $income, int $year): float
     {
-        // TODO: Take Advantage of the IncomeCollection
-        // TODO: Take Advantage of IncomeTypeId
-        // TODO: Make this as real as it's gonna get
-
-        // Return the current collection value
-        $income = $this->value();
-
         // Base tax brackets and rates for 2024, married filing jointly
         // NOTE: min is calculated after inflation estimates
         $taxBrackets = [
@@ -117,10 +186,8 @@ class IncomeCollection
             ['rate' => 0.35, 'min' => 0, 'max' => 731200],
             ['rate' => 0.37, 'min' => 0, 'max' => PHP_INT_MAX]
         ];
-        $standardDeduction = 29200;
 
         // Apply inflation at a guess of 1% per year
-        // This applies to BOTH tax brackets and the standard deduction
         for ($j = 2024; $j < $year; $j++) {
             $i = 0;
             foreach ($taxBrackets as $bracket) {
@@ -131,7 +198,6 @@ class IncomeCollection
                 ];
                 $i++;
             }
-            $standardDeduction = (int)(round($standardDeduction * 1.01));
         }
 
         // Set minimums
@@ -144,8 +210,8 @@ class IncomeCollection
         }
 
         // Apply deduction
-        $income -= $standardDeduction;
-        if ($income < 0) {
+        $taxableIncome = round($income - $this->getStandardDeduction($year), 2);
+        if ($taxableIncome < 0) {
             return 0.00;
         }
 
@@ -154,15 +220,60 @@ class IncomeCollection
 
         // Calculate tax owed based on income and tax brackets
         foreach ($taxBrackets as $bracket) {
-            if ($income <= $bracket['max']) {
-                $taxOwed += $income * $bracket['rate'];
+            if ($taxableIncome <= $bracket['max']) {
+                $taxOwed += $taxableIncome * $bracket['rate'];
                 break;
             } else {
                 $taxOwed += ($bracket['max'] - $bracket['min'] + 1) * $bracket['rate'];
-                $income -= ($bracket['max'] - $bracket['min'] + 1);
+                $taxableIncome -= ($bracket['max'] - $bracket['min'] + 1);
             }
         }
 
         return $taxOwed;
     }
+
+    /**
+     * @param float $income
+     * @param int $year
+     * @return float
+     */
+    private function calculateDividendIncomeTax(float $income, int $year): float
+    {
+        // TODO: follow up on this
+        if ($this->taxableValue($year) < 89250) {
+            return 0.00;
+        } else {
+            return round($income * 0.15, 2);
+        }
+    }
+
+    /**
+     * @param float $income
+     * @param int $year
+     * @return float
+     */
+    private function calculateInvestmentIncomeTax(float $income, int $year): float
+    {
+        // TODO: This very wrong
+        // REVISIT LATER
+        return $income * 0.15;
+    }
+
+    /**
+     * @param int $year
+     * @return float
+     */
+    private function getStandardDeduction(int $year): float
+    {
+        // begin with 2024 deduction
+        $standardDeduction = 29200;
+
+        // Apply inflation at a guess of 1% per year
+        for ($j = 2024; $j < $year; $j++) {
+            $standardDeduction = (int)(round($standardDeduction * 1.01));
+        }
+
+        return $standardDeduction;
+    }
+
 }
