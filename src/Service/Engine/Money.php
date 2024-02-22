@@ -87,7 +87,7 @@ class Money
 
     public function formatted(): string
     {
-        return sprintf('$%01.2f', $this->value);
+        return '$' . number_format($this->value);
     }
 
 }
