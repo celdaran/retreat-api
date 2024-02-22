@@ -1,12 +1,13 @@
 <?php namespace App\Controller;
 
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 use App\Service\Scenario\Scenario;
 
-class ScenarioController
+class ScenarioController extends AbstractController
 {
     public Scenario $scenario;
 
