@@ -149,6 +149,11 @@ class Engine
             $this->currentPeriod->advance();
         }
 
+        $this->summary['totalExpenses'] = round($this->summary['totalExpenses'], 2);
+        $this->summary['totalEarnings'] = round($this->summary['totalEarnings'], 2);
+        $this->summary['totalWithdrawals'] = round($this->summary['totalWithdrawals'], 2);
+        $this->summary['totalIncome'] = round($this->summary['totalIncome'], 2);
+        $this->summary['totalIncomeTax'] = round($this->summary['totalIncomeTax'], 2);
         $this->summary['lastYear'] = $this->currentPeriod->getYear();
         $this->summary['lastMonth'] = $this->currentPeriod->getMonth();
         $assetBalances = $this->assetCollection->getBalances(true);

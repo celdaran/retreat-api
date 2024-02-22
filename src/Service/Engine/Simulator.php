@@ -182,9 +182,16 @@ class Simulator
      */
     public function runSummary(): SimulatorResponse
     {
+        $payload = [];
+
         try {
             $response = $this->runSimulation();
-            $payload = $response->getSummary();
+            foreach ($response->getSummary() as $k => $v) {
+                $payload[] = [
+                    "Item" => $k,
+                    "Value" => $v,
+                ];
+            };
         } catch (Exception $e) {
             $response = new SimulatorResponse();
             $payload = [
