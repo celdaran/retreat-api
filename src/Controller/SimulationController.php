@@ -58,5 +58,17 @@ class SimulationController extends AbstractController
         return new JsonResponse($simulatorResponse->getPayload());
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @noinspection PhpUnused
+     */
+    #[Route('/summary', methods: ['POST'])]
+    public function summary(Request $request): JsonResponse
+    {
+        $this->simulator->setParametersFromRequest($request);
+        $simulatorResponse = $this->simulator->runSummary();
+        return new JsonResponse($simulatorResponse->getPayload());
+    }
 
 }

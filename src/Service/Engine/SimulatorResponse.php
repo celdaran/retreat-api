@@ -19,14 +19,24 @@ class SimulatorResponse
     private string $audit;
 
     /** @var array */
+    private array $summary;
+
+    /** @var array */
     private array $payload;
 
-    public function __construct(bool $success = false, array $simulation = [], array $logs = [], string $audit = '')
+    public function __construct(
+        bool $success = false,
+        array $simulation = [],
+        array $logs = [],
+        string $audit = '',
+        array $summary = []
+    )
     {
         $this->success = $success;
         $this->setSimulation($simulation);
         $this->setLogs($logs);
         $this->setAudit($audit);
+        $this->setSummary($summary);
     }
 
     /**
@@ -84,17 +94,6 @@ class SimulatorResponse
     }
 
     /**
-     * @return array[]
-     */
-    public function serialize(): array
-    {
-        return [
-            'simulation' => $this->getSimulation(),
-            'logs' => $this->getLog()
-        ];
-    }
-
-    /**
      * @return string
      */
     public function getAudit(): string
@@ -109,6 +108,24 @@ class SimulatorResponse
     public function setAudit(string $audit): SimulatorResponse
     {
         $this->audit = $audit;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getSummary(): array
+    {
+        return $this->summary;
+    }
+
+    /**
+     * @param array $summary
+     * @return SimulatorResponse
+     */
+    public function setSummary(array $summary): SimulatorResponse
+    {
+        $this->summary = $summary;
         return $this;
     }
 

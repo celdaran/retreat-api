@@ -178,6 +178,27 @@ class Simulator
     }
 
     /**
+     * @return SimulatorResponse
+     */
+    public function runSummary(): SimulatorResponse
+    {
+        try {
+            $response = $this->runSimulation();
+            $payload = $response->getSummary();
+        } catch (Exception $e) {
+            $response = new SimulatorResponse();
+            $payload = [
+                'code' => 500,
+                'message' => $e->getMessage(),
+            ];
+        }
+
+        $response->setPayload($payload);
+
+        return $response;
+    }
+
+    /**
      * @param Request $request
      */
     public function setParametersFromRequest(Request $request)
@@ -241,8 +262,9 @@ class Simulator
         $simulation = $this->engine->getSimulation();
         $logs = $this->engine->getLogs();
         $audit = $this->engine->getAudit();
+        $summary = $this->engine->getSummary();
 
-        return new SimulatorResponse($success, $simulation, $logs, $audit);
+        return new SimulatorResponse($success, $simulation, $logs, $audit, $summary);
     }
 
 }

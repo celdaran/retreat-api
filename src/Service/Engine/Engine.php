@@ -19,6 +19,7 @@ class Engine
     private Period $currentPeriod;
     private array $simulation;
     private array $audit;
+    private array $summary;
 
     public function __construct(
         ExpenseCollection  $expenseCollection,
@@ -33,6 +34,14 @@ class Engine
         $this->earningsCollection = $earningsCollection;
         $this->incomeCollection = $incomeCollection;
         $this->log = $log;
+        $this->summary = [
+            'loop' => 0,
+            'totalExpenses' => 0.00,
+            'totalEarnings' => 0.00,
+            'totalWithdrawals' => 0.00,
+            'totalIncome' => 0.00,
+            'totalIncomeTax' => 0.00,
+        ];
     }
 
     /**
@@ -127,8 +136,24 @@ class Engine
             $step['shortfall'] = $shortfall->value();
             $this->simulation[] = $step;
 
+            // Update interesting information
+            $this->summary['loop']++;
+            $this->summary['totalExpenses'] += $expense->value();
+            $this->summary['totalEarnings'] += $earnings->value();
+            $this->summary['totalWithdrawals'] += $withdrawals->value();
+            $this->summary['totalIncome'] += $step['income'];
+            $this->summary['totalIncomeTax'] += $step['incomeTax'];
+            $this->summary['hitShortfall'] = $shortfall->gt(0.00) ? 'true' : 'false';
+
             // Next period
             $this->currentPeriod->advance();
+        }
+
+        $this->summary['lastYear'] = $this->currentPeriod->getYear();
+        $this->summary['lastMonth'] = $this->currentPeriod->getMonth();
+        $assetBalances = $this->assetCollection->getBalances(true);
+        foreach ($assetBalances as $k => $v) {
+            $this->summary['asset:'.$k] = $v;
         }
 
         return true;
@@ -174,6 +199,11 @@ class Engine
         }
 
         return $payload;
+    }
+
+    public function getSummary(): array
+    {
+        return $this->summary;
     }
 
     //------------------------------------------------------------------
