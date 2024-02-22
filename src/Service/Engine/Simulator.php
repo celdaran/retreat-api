@@ -18,34 +18,6 @@ class Simulator
     /**
      * @return SimulatorResponse
      */
-    public function runShortfalls(): SimulatorResponse
-    {
-        $payload = [];
-
-        try {
-            $response = $this->runSimulation();
-            foreach ($response->getSimulation() as $period) {
-                $payload[] = [
-                    "x" => sprintf("%04d-%02d", $period["year"], $period["month"]),
-                    "y" => $period["shortfall"],
-                ];
-            }
-        } catch (Exception $e) {
-            $response = new SimulatorResponse();
-            $payload = [
-                'code' => 500,
-                'message' => $e->getMessage(),
-            ];
-        }
-
-        $response->setPayload($payload);
-
-        return $response;
-    }
-
-    /**
-     * @return SimulatorResponse
-     */
     public function runAssetDepletion(): SimulatorResponse
     {
         // Define payload template
@@ -121,6 +93,76 @@ class Simulator
                     "type" => "bar",
                     "stack" => "Asset",
                 ];
+            }
+        } catch (Exception $e) {
+            $response = new SimulatorResponse();
+            $payload = [
+                'code' => 500,
+                'message' => $e->getMessage(),
+            ];
+        }
+
+        $response->setPayload($payload);
+
+        return $response;
+    }
+
+    /**
+     * @return SimulatorResponse
+     */
+    public function runShortfalls(): SimulatorResponse
+    {
+        $payload = [];
+
+        try {
+            $response = $this->runSimulation();
+            foreach ($response->getSimulation() as $period) {
+                $payload[] = [
+                    "x" => sprintf("%04d-%02d", $period["year"], $period["month"]),
+                    "y" => $period["shortfall"],
+                ];
+            }
+        } catch (Exception $e) {
+            $response = new SimulatorResponse();
+            $payload = [
+                'code' => 500,
+                'message' => $e->getMessage(),
+            ];
+        }
+
+        $response->setPayload($payload);
+
+        return $response;
+    }
+
+    /**
+     * @return SimulatorResponse
+     */
+    public function runTable(): SimulatorResponse
+    {
+        $payload = [];
+
+        try {
+            $response = $this->runSimulation();
+            foreach ($response->getSimulation() as $period) {
+                $step = [];
+                $step['period'] = $period['period'];
+                $step['month'] = sprintf("%04d-%02d", $period["year"], $period["month"]);
+                foreach ($period['expenses'] as $n => $v) {
+                    $step[$n] = $v;
+                }
+                $step['expense'] = $period['expense'];
+                $step['income'] = $period['income'];
+                $step['incomeTax'] = $period['incomeTax'];
+                foreach ($period['earnings'] as $n => $v) {
+                    $step[$n] = $v;
+                }
+                $step['shortfall'] = $period['shortfall'];
+                foreach ($period['assets'] as $n => $v) {
+                    $step[$n] = $v;
+                }
+                $step['withdrawals'] = $period['withdrawals'];
+                $payload[] = $step;
             }
         } catch (Exception $e) {
             $response = new SimulatorResponse();

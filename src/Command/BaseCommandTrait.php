@@ -17,6 +17,7 @@ trait BaseCommandTrait
             360,
             2025,
             1,
+            1,
         );
     }
 

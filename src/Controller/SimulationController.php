@@ -3,6 +3,7 @@
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Service\Engine\Engine;
 
 use App\Service\Engine\Simulator;
 
@@ -11,9 +12,23 @@ class SimulationController
     /** @var Simulator */
     private Simulator $simulator;
 
-    public function __construct()
+    public function __construct(Engine $engine)
     {
-        $this->simulator = new Simulator();
+        $this->simulator = new Simulator($engine);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @noinspection PhpUnused
+     * @api
+     */
+    #[Route('/asset/depletion', methods: ['POST'])]
+    public function assetDepletion(Request $request): JsonResponse
+    {
+        $this->simulator->setParametersFromRequest($request);
+        $simulatorResponse = $this->simulator->runAssetDepletion();
+        return new JsonResponse($simulatorResponse->getPayload());
     }
 
     /**
@@ -33,13 +48,14 @@ class SimulationController
      * @param Request $request
      * @return JsonResponse
      * @noinspection PhpUnused
-     * @api
      */
-    #[Route('/asset/depletion', methods: ['POST'])]
-    public function assetDepletion(Request $request): JsonResponse
+    #[Route('/table', methods: ['POST'])]
+    public function table(Request $request): JsonResponse
     {
         $this->simulator->setParametersFromRequest($request);
-        $simulatorResponse = $this->simulator->runAssetDepletion();
+        $simulatorResponse = $this->simulator->runTable();
         return new JsonResponse($simulatorResponse->getPayload());
     }
+
+
 }
