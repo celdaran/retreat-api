@@ -103,9 +103,15 @@ class SimulationParameters
         return $this;
     }
 
-    public function setTaxEngine(?int $taxEngine): SimulationParameters
+    public function setTaxEngine(?int $taxEngine = null): SimulationParameters
     {
-        $this->taxEngine = $taxEngine;
+        if ($taxEngine === null) {
+            // Default to the flat ETR
+            $this->taxEngine = 1;
+        } else {
+            // Otherwise, explicitly set the engine
+            $this->taxEngine = $taxEngine;
+        }
         return $this;
     }
 
