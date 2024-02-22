@@ -148,6 +148,7 @@ class Simulator
             (int)$body['periods'],
             (int)$body['startYear'],
             (int)$body['startMonth'],
+            (int)$body['taxEngine'],
         );
     }
 
@@ -165,10 +166,15 @@ class Simulator
         string $earnings,
         int $periods,
         int $startYear,
-        int $startMonth)
+        int $startMonth,
+        int $taxEngine)
     {
         $until = new Until();
-        $until->setPeriods($periods);
+        if ($periods > 0) {
+            $until->setPeriods($periods);
+        } else {
+            $until->setUntil(Until::ASSETS_DEPLETE);
+        }
         $this->simulationParameters = new SimulationParameters(
             $expense,
             $asset,
@@ -176,6 +182,7 @@ class Simulator
             $until,
             $startYear,
             $startMonth,
+            $taxEngine,
         );
     }
 

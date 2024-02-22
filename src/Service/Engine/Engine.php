@@ -112,7 +112,7 @@ class Engine
             $step['income'] = $this->incomeCollection->value();
 
             // Pay tax burden
-            $incomeTax = $this->incomeCollection->payIncomeTax($this->currentPeriod);
+            $incomeTax = $this->incomeCollection->payIncomeTax($this->currentPeriod, $simulationParameters->getTaxEngine());
             $step['incomeTax'] = $incomeTax;
 
             // Pull 100% of tax payments from assets (this was the BIG BUG discovered the weekend of 2/16/2024)

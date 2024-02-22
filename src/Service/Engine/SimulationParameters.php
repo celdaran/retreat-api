@@ -14,11 +14,14 @@ class SimulationParameters
     /** @var Until */
     private Until $until;
 
-    /** @var int */
+    /** @var ?int */
     private ?int $startYear;
 
-    /** @var int */
+    /** @var ?int */
     private ?int $startMonth;
+
+    /** @var ?int */
+    private ?int $taxEngine;
 
     public function __construct(
         string $expense,
@@ -26,7 +29,8 @@ class SimulationParameters
         string $earnings,
         Until $until,
         ?int $startYear = null,
-        ?int $startMonth = null)
+        ?int $startMonth = null,
+        ?int $taxEngine = null)
     {
         $this
             ->setExpense($expense)
@@ -35,6 +39,7 @@ class SimulationParameters
             ->setUntil($until)
             ->setStartYear($startYear)
             ->setStartMonth($startMonth)
+            ->setTaxEngine($taxEngine)
         ;
     }
 
@@ -98,6 +103,12 @@ class SimulationParameters
         return $this;
     }
 
+    public function setTaxEngine(?int $taxEngine): SimulationParameters
+    {
+        $this->taxEngine = $taxEngine;
+        return $this;
+    }
+
     /**
      * @return string
      */
@@ -144,6 +155,14 @@ class SimulationParameters
     public function getStartMonth(): ?int
     {
         return $this->startMonth;
+    }
+
+    /**
+     * @return ?int
+     */
+    public function getTaxEngine(): ?int
+    {
+        return $this->taxEngine;
     }
 
 }

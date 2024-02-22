@@ -43,10 +43,12 @@ class IncomeCollection
     }
 
     /**
+     * @param Period $currentPeriod
+     * @param ?int $taxEngine
      * @return float
      * @throws Exception
      */
-    public function payIncomeTax(Period $currentPeriod): float
+    public function payIncomeTax(Period $currentPeriod, ?int $taxEngine): float
     {
         $incomeTax = 0.00;
         $cumulativeIncome = $this->value();
@@ -57,7 +59,7 @@ class IncomeCollection
         // Calculate tax at end of year
         if (($currentPeriod->getCurrentPeriod() % 12 === 0) && ($cumulativeIncome > 0.00)) {
             // Calculate tax (right now everything is using ordinary income; may fix this later)
-            $incomeTax = $this->calculateIncomeTax($currentPeriod->getYear());
+            $incomeTax = $this->calculateIncomeTax($currentPeriod->getYear(), $taxEngine);
 
             // Log our ETR just as an FYI: it's not required by the engine
             $effectiveTaxRate = ($incomeTax / $cumulativeIncome) * 100;
