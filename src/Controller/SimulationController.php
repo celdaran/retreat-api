@@ -29,7 +29,7 @@ class SimulationController extends AbstractController
     {
         $this->simulator->setParametersFromRequest($request);
         $simulatorResponse = $this->simulator->runAssetDepletion();
-        return new JsonResponse($simulatorResponse->getPayload());
+        return new JsonResponse($simulatorResponse);
     }
 
     /**
