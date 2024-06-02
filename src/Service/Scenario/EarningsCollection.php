@@ -4,7 +4,6 @@ use App\Service\Engine\IncomeCollection;
 use Exception;
 
 use App\Service\Engine\Earnings;
-use App\Service\Engine\Money;
 use App\Service\Engine\Period;
 use App\Service\Engine\Util;
 use App\Service\Engine\Income;
@@ -42,15 +41,6 @@ class EarningsCollection extends Scenario
         return count($this->earnings);
     }
 
-    /**
-     * Return array of earnings
-     * @return array
-     */
-    public function getEarnings(): array
-    {
-        return $this->earnings;
-    }
-
     public function auditEarnings(Period $period): array
     {
         $audit = [];
@@ -62,7 +52,7 @@ class EarningsCollection extends Scenario
                 'year' => $period->getYear(),
                 'month' => $period->getMonth(),
                 'name' => $earnings->name(),
-                'amount' => $earnings->amount()->value(),
+                'amount' => $earnings->amount(),
                 'status' => $earnings->status(),
             ];
         }
@@ -89,10 +79,10 @@ class EarningsCollection extends Scenario
 
     }
 
-    public function tallyEarnings(Period $period, IncomeCollection $incomeCollection): Money
+    public function tallyEarnings(Period $period, IncomeCollection $incomeCollection): int
     {
         // Initialize total earnings
-        $total = new Money();
+        $total = 0;
 
         // First, get amounts, drawing from every participating earnings
         /** @var Earnings $earnings */
@@ -102,18 +92,18 @@ class EarningsCollection extends Scenario
             if ($earnings->isActive()) {
 
                 // Add to the running total
-                $total->add($earnings->amount()->value());
+                $total += $earnings->amount();
 
                 // Log it
                 $msg = sprintf('Adding earnings "%s", amount %s to period %s tally',
                     $earnings->name(),
-                    $earnings->amount()->formatted(),
+                    Util::usd($earnings->amount()),
                     $period->getCurrentPeriod(),
                 );
                 $this->getLog()->debug($msg);
 
                 // Add to income collection
-                $income = new Income($earnings->name(), $earnings->amount()->value(), $earnings->incomeType());
+                $income = new Income($earnings->name(), $earnings->amount(), $earnings->incomeType());
 
                 // $this->log->debug("Increasing annualIncome by amount: " . $earnings->formatted());
                 $incomeCollection->add($income);
@@ -163,8 +153,8 @@ class EarningsCollection extends Scenario
         foreach ($this->earnings as $earnings) {
             if ($earnings->isActive()) {
                 $amounts[$earnings->name()] = $formatted ?
-                    $earnings->amount()->formatted() :
-                    $earnings->amount()->value();
+                    Util::usd($earnings->amount()) :
+                    $earnings->amount();
             } else {
                 $amounts[$earnings->name()] = $formatted ?
                     'Inactive' :
@@ -178,8 +168,8 @@ class EarningsCollection extends Scenario
     {
         /** @var Earnings $earnings */
         foreach ($this->earnings as $earnings) {
-            $interest = Util::calculateInterest($earnings->amount()->value(), $earnings->inflationRate());
-            $earnings->increaseAmount($interest->value());
+            $interest = Util::calculateInterest($earnings->amount(), $earnings->inflationRate());
+            $earnings->increaseAmount($interest);
         }
     }
 
@@ -207,7 +197,7 @@ class EarningsCollection extends Scenario
             $earnings = new Earnings();
             $earnings
                 ->setName($row['earnings_name'])
-                ->setAmount(new Money((float)$row['amount']))
+                ->setAmount($row['amount'])
                 ->setInflationRate($row['inflation_rate'])
                 ->setIncomeType($row['income_type_id'])
                 ->setBeginYear($row['begin_year'])

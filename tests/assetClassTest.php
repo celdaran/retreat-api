@@ -3,7 +3,6 @@
 use PHPUnit\Framework\TestCase;
 
 use App\Service\Engine\Asset;
-use App\Service\Engine\Money;
 use App\Service\Engine\Period;
 
 final class assetClassTest extends TestCase
@@ -11,7 +10,7 @@ final class assetClassTest extends TestCase
     public function testCanEarnInterest1(): void
     {
         $asset = new Asset();
-        $asset->setCurrentBalance(new Money(100));
+        $asset->setCurrentBalance(100);
         $asset->markActive();
         $canEarnInterest = $asset->canEarnInterest();
         $this->assertEquals(true, $canEarnInterest);
@@ -28,7 +27,7 @@ final class assetClassTest extends TestCase
     public function testCanEarnInterest2(): void
     {
         $asset = new Asset();
-        $asset->setCurrentBalance(new Money(100));
+        $asset->setCurrentBalance(100);
         $asset->markActive();
         $canEarnInterest = $asset->canEarnInterest();
         $this->assertEquals(true, $canEarnInterest);

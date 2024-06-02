@@ -36,11 +36,11 @@ class Engine
         $this->log = $log;
         $this->summary = [
             'loop' => 0,
-            'totalExpenses' => 0.00,
-            'totalEarnings' => 0.00,
-            'totalWithdrawals' => 0.00,
-            'totalIncome' => 0.00,
-            'totalIncomeTax' => 0.00,
+            'totalExpenses' => 0,
+            'totalEarnings' => 0,
+            'totalWithdrawals' => 0,
+            'totalIncome' => 0,
+            'totalIncomeTax' => 0,
         ];
     }
 
@@ -79,7 +79,7 @@ class Engine
         $this->log->debug(sprintf("  Start Month: %d", $this->currentPeriod->getMonth()));
 
         // Loop until we've satisfied our run time
-        $shortfall = new Money();
+        $shortfall = 0;
         while ($simulationParameters->getUntil()->unsatisfied($this->currentPeriod, $shortfall)) {
 
             $this->log->debug(sprintf("-- PERIOD: %d (%04d-%02d) --------------------------------------------- ",
@@ -115,7 +115,7 @@ class Engine
             // If earnings don't cover it, pull balance from assets
             // e.g., I now need to pull $1750 from assets to cover expenses
             $shortfall = $this->getShortfall($expense, $earnings);
-            $withdrawals = $this->getAssetsForPeriod($shortfall);
+            $withdrawals = $this->getAssetsForPeriod($shortfall); // TODO: when $shortfall was an object, it was supposed to be updated
 
             // Log income before (potentially) zeroed out
             $step['income'] = $this->incomeCollection->value();
@@ -125,35 +125,30 @@ class Engine
             $step['incomeTax'] = $incomeTax;
 
             // Pull 100% of tax payments from assets (this was the BIG BUG discovered the weekend of 2/16/2024)
-            $this->getAssetsForPeriod(new Money($incomeTax));
+            $this->getAssetsForPeriod($incomeTax);
 
             // Calculate interest and inflation for everything
             $this->applyPeriodAdjustments();
 
             // Lastly amend the simulation with current step info
-            $step['expense'] = $expense->value();
-            $step['withdrawals'] = $withdrawals->value();
-            $step['shortfall'] = $shortfall->value();
+            $step['expense'] = $expense;
+            $step['withdrawals'] = $withdrawals;
+            $step['shortfall'] = $shortfall;
             $this->simulation[] = $step;
 
             // Update interesting information
             $this->summary['loop']++;
-            $this->summary['totalExpenses'] += $expense->value();
-            $this->summary['totalEarnings'] += $earnings->value();
-            $this->summary['totalWithdrawals'] += $withdrawals->value();
+            $this->summary['totalExpenses'] += $expense;
+            $this->summary['totalEarnings'] += $earnings;
+            $this->summary['totalWithdrawals'] += $withdrawals;
             $this->summary['totalIncome'] += $step['income'];
             $this->summary['totalIncomeTax'] += $step['incomeTax'];
-            $this->summary['hitShortfall'] = $shortfall->gt(0.00) ? 'true' : 'false';
+            $this->summary['hitShortfall'] = ($shortfall > 0) ? 'true' : 'false';
 
             // Next period
             $this->currentPeriod->advance();
         }
 
-        $this->summary['totalExpenses'] = round($this->summary['totalExpenses'], 2);
-        $this->summary['totalEarnings'] = round($this->summary['totalEarnings'], 2);
-        $this->summary['totalWithdrawals'] = round($this->summary['totalWithdrawals'], 2);
-        $this->summary['totalIncome'] = round($this->summary['totalIncome'], 2);
-        $this->summary['totalIncomeTax'] = round($this->summary['totalIncomeTax'], 2);
         $this->summary['lastYear'] = $this->currentPeriod->getYear();
         $this->summary['lastMonth'] = $this->currentPeriod->getMonth();
         $assetBalances = $this->assetCollection->getBalances(true);
@@ -228,12 +223,9 @@ class Engine
         ];
     }
 
-    private function getShortfall(Money $expense, Money $earnings): Money
+    private function getShortfall(int $expense, int $earnings): int
     {
-        $shortfall = new Money();
-        $shortfall->assign($expense->value());
-        $shortfall->subtract($earnings->value());
-        return $shortfall;
+        return $expense - $earnings;
     }
 
     private function appendToAudit()
@@ -249,12 +241,12 @@ class Engine
      * 1) figure out the total expenses in the given period
      * 2) increasing balances to account for inflation
      */
-    private function getExpensesForPeriod(): Money
+    private function getExpensesForPeriod(): int
     {
         return $this->expenseCollection->tallyExpenses($this->currentPeriod);
     }
 
-    private function getEarningsForPeriod(): Money
+    private function getEarningsForPeriod(): int
     {
         return $this->earningsCollection->tallyEarnings($this->currentPeriod, $this->incomeCollection);
     }
@@ -267,17 +259,17 @@ class Engine
      *
      * @throws Exception
      */
-    private function getAssetsForPeriod(Money $amount): Money
+    private function getAssetsForPeriod(int &$amount): int
     {
-        if ($amount->eq(0.00)) {
-            // Stop here and return: we hit breakeven
-            return new Money();
+        if ($amount === 0) {
+            // Stop here and return: we hit break-even
+            return 0;
         }
 
-        if ($amount->lt(0.00)) {
+        if ($amount < 0) {
             // But if it's less, then we need to make a deposit
             $this->assetCollection->stashSurplus($amount);
-            return new Money();
+            return 0;
         }
 
         // Make withdrawals
@@ -288,8 +280,8 @@ class Engine
         );
 
         // If we covered our amount, zero it out
-        if ($withdrawals->ge($amount->value())) {
-            $amount->assign(0.00);
+        if ($withdrawals >= $amount) {
+            $amount = 0;
         }
 
         return $withdrawals;

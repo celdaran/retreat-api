@@ -5,9 +5,11 @@ class Util
 
     /**
      * Calculate compound interest
-     * @return Money
+     * @param float $p
+     * @param float $r
+     * @return int
      */
-    public static function calculateInterest(float $p, float $r): Money
+    public static function calculateInterest(float $p, float $r): int
     {
         // Convert rate
         $r = $r / 100;
@@ -19,7 +21,27 @@ class Util
         $v = $p * (1 + $r / 12) ** (12 * $t);
 
         // Return *just* the interest
-        return new Money(round($v - $p, 2));
+        return (int)round($v - $p, 2);
+    }
+
+    /**
+     * Take a number, convert to float, return as string representation of US$
+     * @param mixed $dollars
+     * @return string
+     */
+    public static function usd(mixed $dollars): string
+    {
+        // If it's not numeric, treat as zero
+        if (!is_numeric($dollars)) {
+            $dollars = 0;
+        }
+
+        // Necessary conversion to get to number_format
+        $dollars = (float)$dollars;
+        $dollars = round($dollars, 2);
+
+        // Now format and return
+        return '$' . number_format($dollars);
     }
 
     /**

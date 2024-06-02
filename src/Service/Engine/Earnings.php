@@ -11,7 +11,7 @@ class Earnings
     const ENDED = 9;
 
     protected string $name;
-    protected Money $amount;
+    protected int $amount;
     protected float $inflationRate;
     protected ?int $incomeType;
     protected ?int $beginYear;
@@ -36,15 +36,15 @@ class Earnings
         return $this;
     }
 
-    public function setAmount(Money $amount): Earnings
+    public function setAmount(int $amount): Earnings
     {
         $this->amount = $amount;
         return $this;
     }
 
-    public function increaseAmount(float $n): Earnings
+    public function increaseAmount(int $n): Earnings
     {
-        $this->amount->add($n);
+        $this->amount += $n;
         return $this;
     }
 
@@ -117,7 +117,7 @@ class Earnings
         return $this->name;
     }
 
-    public function amount(): Money
+    public function amount(): int
     {
         return $this->amount;
     }

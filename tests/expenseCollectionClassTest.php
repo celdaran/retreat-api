@@ -5,7 +5,6 @@ use PHPUnit\Framework\TestCase;
 use App\Service\Scenario\ExpenseCollection;
 use App\Service\Engine\Period;
 use App\Service\Engine\Expense;
-use App\Service\Engine\Money;
 use App\System\Database;
 use App\System\Log;
 
@@ -81,21 +80,21 @@ final class expenseCollectionClassTest extends TestCase
 
         $expenses[0]->markActive();
         $amounts = self::$expenseCollection->getAmounts();
-        $this->assertEquals(500.00, $amounts['Expense 1']);
+        $this->assertEquals(500, $amounts['Expense 1']);
         $this->assertNull($amounts['Expense 2']);
         $this->assertNull($amounts['Expense 3']);
 
         $expenses[1]->markActive();
         $amounts = self::$expenseCollection->getAmounts();
-        $this->assertEquals(500.00, $amounts['Expense 1']);
-        $this->assertEquals(600.00, $amounts['Expense 2']);
+        $this->assertEquals(500, $amounts['Expense 1']);
+        $this->assertEquals(600, $amounts['Expense 2']);
         $this->assertNull($amounts['Expense 3']);
 
         $expenses[2]->markActive();
         $amounts = self::$expenseCollection->getAmounts();
-        $this->assertEquals(500.00, $amounts['Expense 1']);
-        $this->assertEquals(600.00, $amounts['Expense 2']);
-        $this->assertEquals(700.00, $amounts['Expense 3']);
+        $this->assertEquals(500, $amounts['Expense 1']);
+        $this->assertEquals(600, $amounts['Expense 2']);
+        $this->assertEquals(700, $amounts['Expense 3']);
     }
 
     /**
@@ -110,17 +109,17 @@ final class expenseCollectionClassTest extends TestCase
         $expenses = self::$expenseCollection->getExpenses();
 
         $expenses[0]->markActive();
-        $expected = new Money(500.00);
+        $expected = 500;
         $actual = self::$expenseCollection->tallyExpenses($period);
         $this->assertEquals($expected, $actual);
 
         $expenses[1]->markActive();
-        $expected = new Money(1100.00);
+        $expected = 1100;
         $actual = self::$expenseCollection->tallyExpenses($period);
         $this->assertEquals($expected, $actual);
 
         $expenses[2]->markActive();
-        $expected = new Money(1800.00);
+        $expected = 1800;
         $actual = self::$expenseCollection->tallyExpenses($period);
         $this->assertEquals($expected, $actual);
     }
@@ -140,11 +139,11 @@ final class expenseCollectionClassTest extends TestCase
 
         self::$expenseCollection->applyInflation();
 
-        $expected = new Money(500.00);
+        $expected = 500;
         $this->assertEquals($expected, $expenses[0]->amount());
-        $expected = new Money(600.50);
+        $expected = 600;
         $this->assertEquals($expected, $expenses[1]->amount());
-        $expected = new Money(702.92);
+        $expected = 702;
         $this->assertEquals($expected, $expenses[2]->amount());
     }
 
@@ -162,23 +161,14 @@ final class expenseCollectionClassTest extends TestCase
 
         $expenses = self::$expenseCollection->getExpenses();
 
-        $expected = new Money(500.00);
+        $expected = 500;
         $this->assertEquals($expected, $expenses[0]->amount());
-        $expected = new Money(600.00);
+        $expected = 600;
         $this->assertEquals($expected, $expenses[1]->amount());
-        $expected = new Money(700.00);
+        $expected = 700;
         $this->assertEquals($expected, $expenses[2]->amount());
 
         self::$expenseCollection->delete();
-    }
-
-    /**
-     * @return string
-     */
-    private function getLastLog(): string
-    {
-        $logs = self::$expenseCollection->getLog()->getLogs();
-        return $logs[count($logs) - 1];
     }
 
 }

@@ -19,10 +19,10 @@ class Income
     const INVESTMENT = 6;
 
     private string $name;
-    private float $amount;
+    private int $amount;
     private int $type;
 
-    public function __construct(string $name, float $amount, int $type = Income::WAGE)
+    public function __construct(string $name, int $amount, int $type = Income::WAGE)
     {
         $this->setName($name);
         $this->setAmount($amount);
@@ -40,10 +40,10 @@ class Income
     }
 
     /**
-     * @param float $balance
+     * @param int $balance
      * @return $this
      */
-    public function setAmount(float $balance): Income
+    public function setAmount(int $balance): Income
     {
         $this->amount = round($balance, 2);
         return $this;
@@ -68,9 +68,9 @@ class Income
     }
 
     /**
-     * @return float
+     * @return int
      */
-    public function getAmount(): float
+    public function getAmount(): int
     {
         return $this->amount;
     }

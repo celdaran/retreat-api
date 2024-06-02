@@ -8,7 +8,6 @@ use App\Service\Scenario\AssetCollection;
 use App\Service\Engine\IncomeCollection;
 use App\Service\Engine\Period;
 use App\Service\Engine\Asset;
-use App\Service\Engine\Money;
 
 final class assetCollectionClassTest extends TestCase
 {
@@ -55,32 +54,32 @@ final class assetCollectionClassTest extends TestCase
         self::$assetCollection->loadScenario('ut01-assets');
         $balances = self::$assetCollection->getBalances(false);
         $this->assertCount(1, $balances);
-        $this->assertEquals(1000.00, $balances['Asset 1']);
+        $this->assertEquals(1000, $balances['Asset 1']);
 
         self::$assetCollection->loadScenario('ut02-assets');
         $balances = self::$assetCollection->getBalances(false);
         $this->assertCount(2, $balances);
-        $this->assertEquals(500.00, $balances['Asset 1']);
-        $this->assertEquals(1000.00, $balances['Asset 2']);
+        $this->assertEquals(500, $balances['Asset 1']);
+        $this->assertEquals(1000, $balances['Asset 2']);
 
         self::$assetCollection->loadScenario('ut03-assets');
         $balances = self::$assetCollection->getBalances();
         $this->assertCount(3, $balances);
-        $this->assertEquals(300.00, $balances['Asset 1']);
-        $this->assertEquals(300.00, $balances['Asset 2']);
-        $this->assertEquals(600.00, $balances['Asset 3']);
+        $this->assertEquals(300, $balances['Asset 1']);
+        $this->assertEquals(300, $balances['Asset 2']);
+        $this->assertEquals(600, $balances['Asset 3']);
 
         $balances = self::$assetCollection->getBalances(false);
         $this->assertCount(3, $balances);
-        $this->assertEquals(300.00, $balances['Asset 1']);
-        $this->assertEquals(300.00, $balances['Asset 2']);
-        $this->assertEquals(600.00, $balances['Asset 3']);
+        $this->assertEquals(300, $balances['Asset 1']);
+        $this->assertEquals(300, $balances['Asset 2']);
+        $this->assertEquals(600, $balances['Asset 3']);
 
         $balances = self::$assetCollection->getBalances(true);
         $this->assertCount(3, $balances);
-        $this->assertEquals('$300.00', $balances['Asset 1']);
-        $this->assertEquals('$300.00', $balances['Asset 2']);
-        $this->assertEquals('$600.00', $balances['Asset 3']);
+        $this->assertEquals('$300', $balances['Asset 1']);
+        $this->assertEquals('$300', $balances['Asset 2']);
+        $this->assertEquals('$600', $balances['Asset 3']);
     }
 
     /**
@@ -142,8 +141,8 @@ final class assetCollectionClassTest extends TestCase
             // Activate assets for current period
             $assets = self::$assetCollection->activateAssets($period);
 
-            if ($assets[0]->currentBalance()->ge(100.00) && $assets[0]->isActive()) {
-                $assets[0]->decreaseCurrentBalance(100.00);
+            if (($assets[0]->currentBalance() > 100) && $assets[0]->isActive()) {
+                $assets[0]->decreaseCurrentBalance(100);
             }
 
             if (($period->getYear() >= 2025) && ($period->getMonth() >= 6)) {
@@ -168,12 +167,12 @@ final class assetCollectionClassTest extends TestCase
             // Activate assets for current period
             $assets = self::$assetCollection->activateAssets($period);
 
-            if ($assets[0]->currentBalance()->ge(100.00) && ($assets[0]->isActive())) {
-                $assets[0]->decreaseCurrentBalance(100.00);
+            if (($assets[0]->currentBalance() >= 100) && $assets[0]->isActive()) {
+                $assets[0]->decreaseCurrentBalance(100);
             }
 
-            if ($assets[1]->currentBalance()->ge(100.00) && ($assets[1]->isActive())) {
-                $assets[1]->decreaseCurrentBalance(100.00);
+            if (($assets[1]->currentBalance() >= 100) && $assets[1]->isActive()) {
+                $assets[1]->decreaseCurrentBalance(100);
             }
 
             if (($period->getYear() >= 2025) && ($period->getMonth() >= 7)) {
@@ -214,9 +213,9 @@ final class assetCollectionClassTest extends TestCase
         }
 
         $balances = self::$assetCollection->getBalances();
-        $this->assertEquals(1000.00, $balances['Asset 1']);
-        $this->assertEquals(2000.00, $balances['Asset 2']);
-        $this->assertEquals(3000.00, $balances['Asset 3']);
+        $this->assertEquals(1000, $balances['Asset 1']);
+        $this->assertEquals(2000, $balances['Asset 2']);
+        $this->assertEquals(3000, $balances['Asset 3']);
     }
 
     /**
@@ -235,18 +234,18 @@ final class assetCollectionClassTest extends TestCase
 
         // Check interest calculations successful
         $balances = self::$assetCollection->getBalances();
-        $this->assertEquals(1001.67, $balances['Asset 1']);
-        $this->assertEquals(2008.33, $balances['Asset 2']);
-        $this->assertEquals(3025.00, $balances['Asset 3']);
+        $this->assertEquals(1001, $balances['Asset 1']);
+        $this->assertEquals(2008, $balances['Asset 2']);
+        $this->assertEquals(3025, $balances['Asset 3']);
 
         // Earn interest (again)
         self::$assetCollection->earnInterest();
 
         // Check interest calculations successful
         $balances = self::$assetCollection->getBalances();
-        $this->assertEquals(1003.34, $balances['Asset 1']);
-        $this->assertEquals(2016.70, $balances['Asset 2']);
-        $this->assertEquals(3050.21, $balances['Asset 3']);
+        $this->assertEquals(1002, $balances['Asset 1']);
+        $this->assertEquals(2016, $balances['Asset 2']);
+        $this->assertEquals(3050, $balances['Asset 3']);
 
         // While I'm here, let's sneak in an audit check
         $audit = self::$assetCollection->auditAssets($period);
@@ -254,18 +253,18 @@ final class assetCollectionClassTest extends TestCase
         $this->assertEquals(2025, $audit[0]['year']);
         $this->assertEquals(1, $audit[0]['month']);
         $this->assertEquals('Asset 1', $audit[0]['name']);
-        $this->assertEquals(1000.00, $audit[0]['opening_balance']);
-        $this->assertEquals(1003.34, $audit[0]['current_balance']);
-        $this->assertEquals(100.00, $audit[0]['max_withdrawal']);
+        $this->assertEquals(1000, $audit[0]['opening_balance']);
+        $this->assertEquals(1002, $audit[0]['current_balance']);
+        $this->assertEquals(100, $audit[0]['max_withdrawal']);
         $this->assertEquals('active', $audit[0]['status']);
 
         $this->assertEquals(1, $audit[2]['period']);
         $this->assertEquals(2025, $audit[2]['year']);
         $this->assertEquals(1, $audit[2]['month']);
         $this->assertEquals('Asset 3', $audit[2]['name']);
-        $this->assertEquals(3000.00, $audit[2]['opening_balance']);
-        $this->assertEquals(3050.21, $audit[2]['current_balance']);
-        $this->assertEquals(300.00, $audit[2]['max_withdrawal']);
+        $this->assertEquals(3000, $audit[2]['opening_balance']);
+        $this->assertEquals(3050, $audit[2]['current_balance']);
+        $this->assertEquals(300, $audit[2]['max_withdrawal']);
         $this->assertEquals('active', $audit[2]['status']);
     }
 
@@ -277,8 +276,8 @@ final class assetCollectionClassTest extends TestCase
         self::$assetCollection->loadScenario('ut01-assets');
 
         $period = new Period(2025, 1);
-        $expense = new Money(50.00);
-        $expected = new Money(50.00);
+        $expense = 50;
+        $expected = 50;
 
         self::$assetCollection->activateAssets($period);
 
@@ -290,8 +289,8 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(950.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(50.00, self::$incomeCollection->value());
+        $this->assertEquals(950, $assets[0]->currentBalance());
+        $this->assertEquals(50, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -302,8 +301,8 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(900.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(100.00, self::$incomeCollection->value());
+        $this->assertEquals(900, $assets[0]->currentBalance());
+        $this->assertEquals(100, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -314,8 +313,8 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(850.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(150.00, self::$incomeCollection->value());
+        $this->assertEquals(850, $assets[0]->currentBalance());
+        $this->assertEquals(150, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -330,8 +329,8 @@ final class assetCollectionClassTest extends TestCase
         self::$assetCollection->loadScenario('ut02-assets');
 
         $period = new Period(2025, 1);
-        $expense = new Money(100.00);
-        $expected = new Money(100.00);
+        $expense = 100;
+        $expected = 100;
 
         self::$assetCollection->activateAssets($period);
 
@@ -343,9 +342,9 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(400.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(100.00, self::$incomeCollection->value());
+        $this->assertEquals(400, $assets[0]->currentBalance());
+        $this->assertEquals(1000, $assets[1]->currentBalance());
+        $this->assertEquals(100, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -356,9 +355,9 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(300.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(200.00, self::$incomeCollection->value());
+        $this->assertEquals(300, $assets[0]->currentBalance());
+        $this->assertEquals(1000, $assets[1]->currentBalance());
+        $this->assertEquals(200, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -369,9 +368,9 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(200.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(300.00, self::$incomeCollection->value());
+        $this->assertEquals(200, $assets[0]->currentBalance());
+        $this->assertEquals(1000, $assets[1]->currentBalance());
+        $this->assertEquals(300, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -382,9 +381,9 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(100.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(400.00, self::$incomeCollection->value());
+        $this->assertEquals(100, $assets[0]->currentBalance());
+        $this->assertEquals(1000, $assets[1]->currentBalance());
+        $this->assertEquals(400, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -395,9 +394,9 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(0.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(1000.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(500.00, self::$incomeCollection->value());
+        $this->assertEquals(0, $assets[0]->currentBalance());
+        $this->assertEquals(1000, $assets[1]->currentBalance());
+        $this->assertEquals(500, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -408,9 +407,9 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(0.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(900.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(600.00, self::$incomeCollection->value());
+        $this->assertEquals(0, $assets[0]->currentBalance());
+        $this->assertEquals(900, $assets[1]->currentBalance());
+        $this->assertEquals(600, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -425,14 +424,14 @@ final class assetCollectionClassTest extends TestCase
         self::$assetCollection->loadScenario('ut03-assets');
 
         $period = new Period(2025, 1);
-        $expense = new Money(500.00);
+        $expense = 500;
 
         self::$assetCollection->activateAssets($period);
 
         //-------------------------
 
         $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
-        $expected = new Money(100.00);
+        $expected = 100;
         $this->assertEquals($expected, $actual);
         $lastLog = $this->getLastLog();
         $this->assertStringContainsString("Insufficient funds", $lastLog);
@@ -440,10 +439,10 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(200.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(300.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals(100.00, self::$incomeCollection->value());
+        $this->assertEquals(200, $assets[0]->currentBalance());
+        $this->assertEquals(300, $assets[1]->currentBalance());
+        $this->assertEquals(600, $assets[2]->currentBalance());
+        $this->assertEquals(100, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -456,10 +455,10 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(100.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(300.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals(200.00, self::$incomeCollection->value());
+        $this->assertEquals(100, $assets[0]->currentBalance());
+        $this->assertEquals(300, $assets[1]->currentBalance());
+        $this->assertEquals(600, $assets[2]->currentBalance());
+        $this->assertEquals(200, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -467,7 +466,7 @@ final class assetCollectionClassTest extends TestCase
         // In the third period, Asset 1 gets drained and Asset 2 kicks in
         // So we pull $200 instead of $100, but that's still shy of the
         // $500 needed for this month
-        $expected->assign(200.00);
+        $expected = 200;
         $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
         $lastLog = $this->getLastLog();
@@ -476,17 +475,17 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(  0.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(200.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals(400.00, self::$incomeCollection->value());
+        $this->assertEquals(  0, $assets[0]->currentBalance());
+        $this->assertEquals(200, $assets[1]->currentBalance());
+        $this->assertEquals(600, $assets[2]->currentBalance());
+        $this->assertEquals(400, self::$incomeCollection->value());
 
         //-------------------------
 
         $period->advance();
         // In the fourth period, Asset 1 is drained and Asset 2 is still
         // active. But we're back to only getting $100 total for the month
-        $expected->assign(100.00);
+        $expected = 100;
         $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
         $lastLog = $this->getLastLog();
@@ -495,10 +494,10 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(  0.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(100.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(600.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals(500.00, self::$incomeCollection->value());
+        $this->assertEquals(  0, $assets[0]->currentBalance());
+        $this->assertEquals(100, $assets[1]->currentBalance());
+        $this->assertEquals(600, $assets[2]->currentBalance());
+        $this->assertEquals(500, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -512,7 +511,7 @@ final class assetCollectionClassTest extends TestCase
         self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $period->advance();
         // Skipping ahead to the ninth period...
-        $expected->assign(100.00);
+        $expected = 100;
         $actual = self::$assetCollection->makeWithdrawals($period, $expense, self::$incomeCollection);
         $this->assertEquals($expected, $actual);
         $lastLog = $this->getLastLog();
@@ -521,10 +520,10 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals(   0.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(   0.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals( 100.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals(1100.00, self::$incomeCollection->value());
+        $this->assertEquals(   0, $assets[0]->currentBalance());
+        $this->assertEquals(   0, $assets[1]->currentBalance());
+        $this->assertEquals( 100, $assets[2]->currentBalance());
+        $this->assertEquals(1100, self::$incomeCollection->value());
 
         //-------------------------
 
@@ -541,8 +540,8 @@ final class assetCollectionClassTest extends TestCase
         self::$assetCollection->loadScenario('ut04-assets');
 
         $period = new Period(2025, 1);
-        $expense = new Money(500.00);
-        $expected = new Money(500.00);
+        $expense = 500;
+        $expected = 500;
 
         self::$assetCollection->activateAssets($period);
 
@@ -554,19 +553,19 @@ final class assetCollectionClassTest extends TestCase
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals( 900.00, $assets[0]->currentBalance()->value());
-        $this->assertEquals(1800.00, $assets[1]->currentBalance()->value());
-        $this->assertEquals(2800.00, $assets[2]->currentBalance()->value());
-        $this->assertEquals( 500.00, self::$incomeCollection->value());
+        $this->assertEquals( 900, $assets[0]->currentBalance());
+        $this->assertEquals(1800, $assets[1]->currentBalance());
+        $this->assertEquals(2800, $assets[2]->currentBalance());
+        $this->assertEquals( 500, self::$incomeCollection->value());
 
         self::$assetCollection->earnInterest();
 
         /** @var Asset[] $assets */
         $assets = self::$assetCollection->getAssets();
 
-        $this->assertEquals( 901.50, $assets[0]->currentBalance()->value());
-        $this->assertEquals(1807.50, $assets[1]->currentBalance()->value());
-        $this->assertEquals(2823.33, $assets[2]->currentBalance()->value());
+        $this->assertEquals( 901, $assets[0]->currentBalance());
+        $this->assertEquals(1807, $assets[1]->currentBalance());
+        $this->assertEquals(2823, $assets[2]->currentBalance());
 
         //-------------------------
 

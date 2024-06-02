@@ -11,7 +11,7 @@ class Expense
     const ENDED = 9;
 
     protected string $name;
-    protected Money $amount;
+    protected int $amount;
     protected float $inflationRate;
     protected ?int $beginYear;
     protected ?int $beginMonth;
@@ -35,15 +35,15 @@ class Expense
         return $this;
     }
 
-    public function setAmount(Money $amount): Expense
+    public function setAmount(int $amount): Expense
     {
         $this->amount = $amount;
         return $this;
     }
 
-    public function increaseAmount(float $n): Expense
+    public function increaseAmount(int $n): Expense
     {
-        $this->amount->add($n);
+        $this->amount += $n;
         return $this;
     }
 
@@ -130,7 +130,7 @@ class Expense
         return $this->name;
     }
 
-    public function amount(): Money
+    public function amount(): int
     {
         return $this->amount;
     }

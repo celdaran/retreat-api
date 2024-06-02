@@ -13,14 +13,16 @@ class Asset
 
     protected int $id;
     protected string $name;
-    protected Money $openingBalance;
-    protected Money $currentBalance;
-    protected Money $maxWithdrawal;
+    protected int $openingBalance;
+    protected int $currentBalance;
+    protected int $maxWithdrawal;
     protected float $apr;
     protected int $incomeType;
     protected ?int $beginAfter;
     protected ?int $beginYear;
     protected ?int $beginMonth;
+    protected ?int $ignoreUntilYear;
+    protected ?int $ignoreUntilMonth;
     protected int $status;
 
     public function __construct()
@@ -44,25 +46,25 @@ class Asset
         return $this;
     }
 
-    public function setOpeningBalance(Money $openingBalance): Asset
+    public function setOpeningBalance(int $openingBalance): Asset
     {
         $this->openingBalance = $openingBalance;
         return $this;
     }
 
-    public function setCurrentBalance(Money $currentBalance): Asset
+    public function setCurrentBalance(int $currentBalance): Asset
     {
         $this->currentBalance = $currentBalance;
         return $this;
     }
 
-    public function increaseCurrentBalance(float $amount): Asset
+    public function increaseCurrentBalance(int $amount): Asset
     {
-        $this->currentBalance->add($amount);
+        $this->currentBalance += $amount;
         return $this;
     }
 
-    public function decreaseCurrentBalance(float $amount): Asset
+    public function decreaseCurrentBalance(int $amount): Asset
     {
         // Cannot decrease balance of a non-active asset
         if (!$this->isActive()) {
@@ -70,17 +72,17 @@ class Asset
         }
 
         // Subtract
-        $this->currentBalance->subtract($amount);
-        if ($this->currentBalance()->eq(0.00)) {
+        $this->currentBalance -= $amount;
+        if ($this->currentBalance() === 0) {
             $this->markDepleted();
-        } elseif ($this->currentBalance()->lt(0.00)) {
+        } elseif ($this->currentBalance() < 0) {
             throw new Exception("decreaseCurrentBalance: asset balance is negative");
         }
 
         return $this;
     }
 
-    public function setMaxWithdrawal(Money $maxWithdrawal): Asset
+    public function setMaxWithdrawal(int $maxWithdrawal): Asset
     {
         $this->maxWithdrawal = $maxWithdrawal;
         return $this;
@@ -131,7 +133,7 @@ class Asset
     public function markDepleted(): Asset
     {
         $this->status = self::DEPLETED;
-        $this->currentBalance = new Money();
+        $this->currentBalance = 0;
         return $this;
     }
 
@@ -149,17 +151,17 @@ class Asset
         return $this->name;
     }
 
-    public function openingBalance(): Money
+    public function openingBalance(): int
     {
         return $this->openingBalance;
     }
 
-    public function currentBalance(): Money
+    public function currentBalance(): int
     {
         return $this->currentBalance;
     }
 
-    public function maxWithdrawal(): Money
+    public function maxWithdrawal(): int
     {
         return $this->maxWithdrawal;
     }
@@ -258,7 +260,7 @@ class Asset
     public function canEarnInterest(): bool
     {
         if (!$this->isDepleted()) {
-            if ($this->currentBalance()->value() > 0.00) {
+            if ($this->currentBalance() > 0.00) {
                 return true;
             }
         }

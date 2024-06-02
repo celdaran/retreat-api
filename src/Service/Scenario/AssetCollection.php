@@ -3,7 +3,6 @@
 use Exception;
 
 use App\Service\Engine\Asset;
-use App\Service\Engine\Money;
 use App\Service\Engine\Period;
 use App\Service\Engine\Util;
 use App\Service\Engine\Income;
@@ -62,9 +61,9 @@ class AssetCollection extends Scenario
                 'year' => $period->getYear(),
                 'month' => $period->getMonth(),
                 'name' => $asset->name(),
-                'opening_balance' => $asset->openingBalance()->value(),
-                'current_balance' => $asset->currentBalance()->value(),
-                'max_withdrawal' => $asset->maxWithdrawal()->value(),
+                'opening_balance' => $asset->openingBalance(),
+                'current_balance' => $asset->currentBalance(),
+                'max_withdrawal' => $asset->maxWithdrawal(),
                 'status' => $asset->status(),
             ];
         }
@@ -75,13 +74,13 @@ class AssetCollection extends Scenario
     /**
      * Withdraw money from fund(s) until expense is matched
      * @param Period $period
-     * @param Money $expense
+     * @param int $expense
      * @param IncomeCollection $incomeCollection
-     * @return Money
+     * @return int
      */
-    public function makeWithdrawals(Period $period, Money $expense, IncomeCollection $incomeCollection): Money
+    public function makeWithdrawals(Period $period, int $expense, IncomeCollection $incomeCollection): int
     {
-        $total = new Money();
+        $total = 0;
 
         /** @var Asset $asset */
         foreach ($this->assets as $asset) {
@@ -89,46 +88,44 @@ class AssetCollection extends Scenario
             if ($this->activateAsset($asset, $period)) {
 
                 // Set withdrawal amount
-                $amount = new Money();
-                $amount->assign(
+                /** @var int $amount */
+                $amount =
                     min(// The smallest of:
                     // The full expense pulled from the source (e.g., drawing $5,000 from a $50,000 source)
-                        $expense->value(),
-                        // Unless a maximum withdrawal amount caps the above
-                        $asset->maxWithdrawal()->value(),
-                        // Or the remaining balance in the asset covers it
-                        $asset->currentBalance()->value(),
-                        // Lastly, if we just need enough to top off the expense
-                        ($expense->value() - $total->value()),
-                    )
+                    $expense,
+                    // Unless a maximum withdrawal amount caps the above
+                    $asset->maxWithdrawal(),
+                    // Or the remaining balance in the asset covers it
+                    $asset->currentBalance(),
+                    // Lastly, if we just need enough to top off the expense
+                    ($expense - $total),
                 );
 
-                if ($amount->le(0.00)) {
-                    $topOff = new Money();
-                    $topOff->assign($expense->value() - $total->value());
+                if ($amount <= 0) {
+                    $topOff = $expense - $total;
                     $this->getLog()->debug('Got a withdrawal amount of zero while pulling from asset "' . $asset->name() . '"');
-                    $this->getLog()->debug('  Amount          = ' . $amount->formatted());
-                    $this->getLog()->debug('  Target Expense  = ' . $expense->formatted());
-                    $this->getLog()->debug('  Max Withdrawal  = ' . $asset->maxWithdrawal()->formatted());
-                    $this->getLog()->debug('  Current Balance = ' . $asset->currentBalance()->formatted());
-                    $this->getLog()->debug('  Top-Off amount  = ' . $topOff->formatted());
+                    $this->getLog()->debug('  Amount          = ' . Util::usd($amount));
+                    $this->getLog()->debug('  Target Expense  = ' . Util::usd($expense));
+                    $this->getLog()->debug('  Max Withdrawal  = ' . Util::usd($asset->maxWithdrawal()));
+                    $this->getLog()->debug('  Current Balance = ' . Util::usd($asset->currentBalance()));
+                    $this->getLog()->debug('  Top-Off amount  = ' . Util::usd($topOff));
                     $asset->markDepleted();
                 } else {
                     $msg = sprintf('Pulling %s to meet %s from asset "%s" in %4d-%02d',
-                        $amount->formatted(),
-                        $expense->formatted(),
+                        Util::usd($amount),
+                        Util::usd($expense),
                         $asset->name(),
                         $period->getYear(),
                         $period->getMonth(),
                     );
                     $this->getLog()->debug($msg);
-                    $total->add($amount->value());
+                    $total += $amount;
 
                     // Reduce balance by withdrawal amount
-                    $asset->decreaseCurrentBalance($amount->value());
+                    $asset->decreaseCurrentBalance($amount);
                 }
 
-                $income = new Income($asset->name(), $amount->value(), $asset->incomeType());
+                $income = new Income($asset->name(), $amount, $asset->incomeType());
                 $incomeCollection->add($income);
                 /*
                 if ($asset->taxable()) {
@@ -141,24 +138,24 @@ class AssetCollection extends Scenario
 
                 $msg = sprintf('Current balance of asset "%s" is %s',
                     $asset->name(),
-                    $asset->currentBalance()->formatted(),
+                    Util::usd($asset->currentBalance()),
                 );
                 $this->getLog()->debug($msg);
 
-                if ($total->value() === $expense->value()) {
+                if ($total === $expense) {
                     // Just hack our way out of this
                     break;
                 }
             }
         }
 
-        if ($total->value() < $expense->value()) {
+        if ($total < $expense) {
             $msg = sprintf('Insufficient funds in period %d (%4d-%02d); needed: %s vs found: %s',
                 $period->getCurrentPeriod(),
                 $period->getYear(),
                 $period->getMonth(),
-                $expense->formatted(),
-                $total->formatted(),
+                Util::usd($expense),
+                Util::usd($total),
             );
             $this->getLog()->warn($msg);
         }
@@ -169,19 +166,19 @@ class AssetCollection extends Scenario
     /**
      * Special case
      */
-    public function stashSurplus(Money $amount)
+    public function stashSurplus(int $amount)
     {
         /** @var Asset $asset */
         foreach ($this->assets as $asset) {
             if ($asset->name() === 'Checking Account') {
-                $asset->increaseCurrentBalance($amount->value(true));
+                $asset->increaseCurrentBalance($amount);
                 return;
             }
         }
     }
 
     /**
-     * Activate all activatable assets for a period
+     * Activate all activate-able assets for a period
      * @param Period $period
      * @return Asset[]
      */
@@ -230,8 +227,8 @@ class AssetCollection extends Scenario
         /** @var Asset $asset */
         foreach ($this->assets as $asset) {
             if ($asset->canEarnInterest()) {
-                $interest = Util::calculateInterest($asset->currentBalance()->value(), $asset->apr());
-                $asset->increaseCurrentBalance($interest->value());
+                $interest = Util::calculateInterest($asset->currentBalance(), $asset->apr());
+                $asset->increaseCurrentBalance($interest);
             }
         }
     }
@@ -242,8 +239,8 @@ class AssetCollection extends Scenario
         /** @var Asset $asset */
         foreach ($this->assets as $asset) {
             $assets[$asset->name()] = $formatted ?
-                $asset->currentBalance()->formatted() :
-                $asset->currentBalance()->value();
+                Util::usd($asset->currentBalance()) :
+                $asset->currentBalance();
         }
         return $assets;
     }
@@ -268,9 +265,9 @@ class AssetCollection extends Scenario
             $asset
                 ->setId($row['asset_id'])
                 ->setName($row['asset_name'])
-                ->setOpeningBalance(new Money((float)$row['opening_balance']))
-                ->setCurrentBalance(new Money((float)$row['opening_balance']))
-                ->setMaxWithdrawal(new Money((float)$row['max_withdrawal']))
+                ->setOpeningBalance($row['opening_balance'])
+                ->setCurrentBalance($row['opening_balance'])
+                ->setMaxWithdrawal($row['max_withdrawal'])
                 ->setApr($row['apr'])
                 ->setIncomeType($row['income_type_id'])
                 ->setBeginAfter($row['begin_after'])

@@ -3,7 +3,6 @@
 use Exception;
 
 use App\Service\Engine\Expense;
-use App\Service\Engine\Money;
 use App\Service\Engine\Period;
 use App\Service\Engine\Util;
 
@@ -64,7 +63,7 @@ class ExpenseCollection extends Scenario
                 'year' => $period->getYear(),
                 'month' => $period->getMonth(),
                 'name' => $expense->name(),
-                'amount' => $expense->amount()->value(),
+                'amount' => $expense->amount(),
                 'status' => $expense->status(),
             ];
         }
@@ -90,19 +89,20 @@ class ExpenseCollection extends Scenario
         }
     }
 
-    public function tallyExpenses(Period $period): Money
+    public function tallyExpenses(Period $period): int
     {
         // First, get amounts, drawing from every participating expense
-        $total = new Money();
+        $total = 0;
+        /** @var Expense $expense */
         foreach ($this->expenses as $expense) {
             if ($expense->isActive()) {
                 $msg = sprintf('Adding expense "%s", amount %s to period %s tally',
                     $expense->name(),
-                    $expense->amount()->formatted(),
+                    Util::usd($expense->amount()),
                     $period->getCurrentPeriod(),
                 );
                 $this->getLog()->debug($msg);
-                $total->add($expense->amount()->value());
+                $total += $expense->amount();
             }
         }
 
@@ -145,8 +145,8 @@ class ExpenseCollection extends Scenario
         foreach ($this->expenses as $expense) {
             if ($expense->isActive()) {
                 $amounts[$expense->name()] = $formatted ?
-                    $expense->amount()->formatted() :
-                    $expense->amount()->value();
+                    Util::usd($expense->amount()) :
+                    $expense->amount();
             } else {
                 $amounts[$expense->name()] = $formatted ?
                     'Inactive' :
@@ -160,8 +160,8 @@ class ExpenseCollection extends Scenario
     {
         /** @var Expense $expense */
         foreach ($this->expenses as $expense) {
-            $interest = Util::calculateInterest($expense->amount()->value(), $expense->inflationRate());
-            $expense->increaseAmount($interest->value());
+            $interest = Util::calculateInterest($expense->amount(), $expense->inflationRate());
+            $expense->increaseAmount($interest);
         }
     }
 
@@ -225,7 +225,7 @@ class ExpenseCollection extends Scenario
             $expense = new Expense();
             $expense
                 ->setName($row['expense_name'])
-                ->setAmount(new Money((float)$row['amount']))
+                ->setAmount($row['amount'])
                 ->setInflationRate($row['inflation_rate'])
                 ->setBeginYear($row['begin_year'])
                 ->setBeginMonth($row['begin_month'])

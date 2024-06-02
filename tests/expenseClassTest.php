@@ -4,7 +4,6 @@ use PHPUnit\Framework\TestCase;
 
 use App\Service\Engine\Expense;
 use App\Service\Engine\Period;
-use App\Service\Engine\Money;
 
 final class expenseClassTest extends TestCase
 {
@@ -105,7 +104,7 @@ final class expenseClassTest extends TestCase
         $expense = new Expense();
         $expense
             ->setName('Unit Test')
-            ->setAmount(new Money(100.00))
+            ->setAmount(100)
             ->setInflationRate(0.000)
             ->setBeginYear(2030)
             ->setBeginMonth(8)

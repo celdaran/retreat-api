@@ -25,6 +25,7 @@ class Until
 
     /**
      * @param int $until
+     * @return Until
      */
     public function setUntil(int $until): Until
     {
@@ -42,6 +43,7 @@ class Until
 
     /**
      * @param int $periods
+     * @return Until
      */
     public function setPeriods(int $periods): Until
     {
@@ -64,11 +66,11 @@ class Until
 
     /**
      * @param Period $period
-     * @param Money $shortfall
+     * @param int $shortfall
      * @return bool
      * @throws Exception
      */
-    public function unsatisfied(Period $period, Money $shortfall): bool
+    public function unsatisfied(Period $period, int $shortfall): bool
     {
         $satisfied = false;
 
@@ -81,7 +83,7 @@ class Until
 
         // Check for asset depletion
         if ($this->getUntil() === Until::ASSETS_DEPLETE) {
-            if ($shortfall->gt(0.00)) {
+            if ($shortfall > 0) {
                 $satisfied = true;
             }
         }
