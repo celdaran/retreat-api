@@ -11,7 +11,7 @@ class IndexController extends AbstractController
         return new Response($this->staticIndex());
     }
 
-    private function staticIndex() {
+    private function staticIndex(): string {
         return <<<'EOF'
 <!DOCTYPE html>
 <html lang="en">

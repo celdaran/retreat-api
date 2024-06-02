@@ -265,7 +265,7 @@ class Expense
             // If so, end the expense
             $this->markEnded();
         } else {
-            // Otherwise revert to planning state
+            // Otherwise, revert to planning state
             $this->markPlanned();
         }
     }

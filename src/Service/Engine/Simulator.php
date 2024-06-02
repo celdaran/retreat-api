@@ -191,7 +191,7 @@ class Simulator
                     "Item" => $k,
                     "Value" => $v,
                 ];
-            };
+            }
         } catch (Exception $e) {
             $response = new SimulatorResponse();
             $payload = [
@@ -229,6 +229,7 @@ class Simulator
      * @param int $periods
      * @param int $startYear
      * @param int $startMonth
+     * @param int $taxEngine
      */
     public function setParameters(
         string $expense,
