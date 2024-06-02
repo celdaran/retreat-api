@@ -3,6 +3,7 @@
 use PHPUnit\Framework\TestCase;
 
 use App\Service\Engine\Util;
+use App\Service\Engine\Until;
 
 final class utilClassTest extends TestCase
 {
@@ -67,6 +68,60 @@ final class utilClassTest extends TestCase
 
         $cmp = Util::periodCompare(1960, 1, NULL, NULL);
         $this->assertEquals(-1, $cmp);
+    }
+
+    public function testFormatDollars(): void
+    {
+        $f = Util::usd(null);
+        $this->assertEquals('$0', $f);
+
+        $f = Util::usd("0");
+        $this->assertEquals('$0', $f);
+
+        $f = Util::usd("1");
+        $this->assertEquals('$1', $f);
+
+        $f = Util::usd("1.25");
+        $this->assertEquals('$1', $f);
+
+        $f = Util::usd("1.75");
+        $this->assertEquals('$2', $f);
+
+        $f = Util::usd("one dollar");
+        $this->assertEquals('$0', $f);
+
+        $f = Util::usd(new Until());
+        $this->assertEquals('$0', $f);
+
+        $f = Util::usd(0);
+        $this->assertEquals('$0', $f);
+
+        $f = Util::usd(1);
+        $this->assertEquals('$1', $f);
+
+        $f = Util::usd(10);
+        $this->assertEquals('$10', $f);
+
+        $f = Util::usd(10);
+        $this->assertEquals('$10', $f);
+
+        $f = Util::usd(10.123);
+        $this->assertEquals('$10', $f);
+
+        $f = Util::usd(10.789);
+        $this->assertEquals('$11', $f);
+
+        $f = Util::usd(17.50);
+        $this->assertEquals('$18', $f);
+
+        $f = Util::usd(1000);
+        $this->assertEquals('$1,000', $f);
+
+        $f = Util::usd(1234567);
+        $this->assertEquals('$1,234,567', $f);
+
+        $f = Util::usd(1234567.89);
+        $this->assertEquals('$1,234,568', $f);
     }
 
 }
