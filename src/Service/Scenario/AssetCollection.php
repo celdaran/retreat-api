@@ -43,11 +43,19 @@ class AssetCollection extends Scenario
 
     /**
      * Return array of assets
+     * @param Period $period
      * @return array
      */
-    public function getAssets(): array
+    public function getAssets(Period $period): array
     {
-        return $this->assets;
+        $filteredAssets = [];
+        /** @var Asset $asset */
+        foreach ($this->assets as $asset) {
+            if (!$asset->isIgnored($period)) {
+                $filteredAssets[] = $asset;
+            }
+        }
+        return $filteredAssets;
     }
 
     public function auditAssets(Period $period): array
@@ -55,7 +63,7 @@ class AssetCollection extends Scenario
         $audit = [];
 
         /** @var Asset $asset */
-        foreach ($this->assets as $asset) {
+        foreach ($this->getAssets($period) as $asset) {
             $audit[] = [
                 'period' => $period->getCurrentPeriod(),
                 'year' => $period->getYear(),
@@ -83,7 +91,7 @@ class AssetCollection extends Scenario
         $total = 0;
 
         /** @var Asset $asset */
-        foreach ($this->assets as $asset) {
+        foreach ($this->getAssets($period) as $asset) {
 
             if ($this->activateAsset($asset, $period)) {
 
@@ -166,10 +174,10 @@ class AssetCollection extends Scenario
     /**
      * Special case
      */
-    public function stashSurplus(int $amount)
+    public function stashSurplus(Period $period, int $amount)
     {
         /** @var Asset $asset */
-        foreach ($this->assets as $asset) {
+        foreach ($this->getAssets($period) as $asset) {
             if ($asset->name() === 'Checking Account') {
                 $asset->increaseCurrentBalance($amount);
                 return;
@@ -185,7 +193,7 @@ class AssetCollection extends Scenario
     public function activateAssets(Period $period): array
     {
         /** @var Asset[] $assets */
-        $assets = $this->getAssets();
+        $assets = $this->getAssets($period);
         foreach ($assets as $asset) {
             $this->activateAsset($asset, $period);
         }
@@ -200,7 +208,7 @@ class AssetCollection extends Scenario
      */
     public function activateAsset(Asset $asset, Period $period): bool
     {
-        $beginAfterAsset = $this->getBeginAfter($asset->beginAfter());
+        $beginAfterAsset = $this->getBeginAfter($period, $asset->beginAfter());
         $asset->activate($period, $beginAfterAsset);
         return $asset->isActive();
     }
@@ -209,9 +217,9 @@ class AssetCollection extends Scenario
      * @param int|null $beginAfter
      * @return Asset|null
      */
-    private function getBeginAfter(?int $beginAfter): ?Asset
+    private function getBeginAfter(Period $period, ?int $beginAfter): ?Asset
     {
-        foreach ($this->assets as $asset) {
+        foreach ($this->getAssets($period) as $asset) {
             if ($asset->id() === $beginAfter) {
                 return $asset;
             }
@@ -222,10 +230,10 @@ class AssetCollection extends Scenario
     /**
      * Loop through each asset and add interest
      */
-    public function earnInterest()
+    public function earnInterest(Period $period)
     {
         /** @var Asset $asset */
-        foreach ($this->assets as $asset) {
+        foreach ($this->getAssets($period) as $asset) {
             if ($asset->canEarnInterest()) {
                 $interest = Util::calculateInterest($asset->currentBalance(), $asset->apr());
                 $asset->increaseCurrentBalance($interest);
@@ -233,11 +241,11 @@ class AssetCollection extends Scenario
         }
     }
 
-    public function getBalances(bool $formatted = false): array
+    public function getBalances(Period $period, bool $formatted = false): array
     {
         $assets = [];
         /** @var Asset $asset */
-        foreach ($this->assets as $asset) {
+        foreach ($this->getAssets($period) as $asset) {
             $assets[$asset->name()] = $formatted ?
                 Util::usd($asset->currentBalance()) :
                 $asset->currentBalance();
@@ -273,6 +281,8 @@ class AssetCollection extends Scenario
                 ->setBeginAfter($row['begin_after'])
                 ->setBeginYear($row['begin_year'])
                 ->setBeginMonth($row['begin_month'])
+                ->setIgnoreUntilYear($row['ignore_until_year'])
+                ->setIgnoreUntilMonth($row['ignore_until_month'])
                 ->markUntapped();
             $collection[] = $asset;
         }

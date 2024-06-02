@@ -118,6 +118,18 @@ class Asset
         return $this;
     }
 
+    public function setIgnoreUntilYear(?int $ignoreUntilYear): Asset
+    {
+        $this->ignoreUntilYear = $ignoreUntilYear;
+        return $this;
+    }
+
+    public function setIgnoreUntilMonth(?int $ignoreUntilMonth): Asset
+    {
+        $this->ignoreUntilMonth = $ignoreUntilMonth;
+        return $this;
+    }
+
     public function markUntapped(): Asset
     {
         $this->status = self::UNTAPPED;
@@ -189,6 +201,16 @@ class Asset
     public function beginMonth(): ?int
     {
         return $this->beginMonth;
+    }
+
+    public function ignoreUntilYear(): ?int
+    {
+        return $this->ignoreUntilYear;
+    }
+
+    public function ignoreUntilMonth(): ?int
+    {
+        return $this->ignoreUntilMonth;
     }
 
     public function isUntapped(): bool
@@ -279,6 +301,26 @@ class Asset
             if ($compare >= 0) {
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    public function isIgnored(Period $period): bool
+    {
+        // If ignore not set at all, then don't ignore
+        if (($this->ignoreUntilYear() === null) || ($this->ignoreUntilMonth() === null)) {
+            return false;
+        }
+
+        // Otherwise, compare it
+        $cmp = Util::periodCompare(
+            $this->ignoreUntilYear(), $this->ignoreUntilMonth(),
+            $period->getYear(), $period->getMonth(),
+        );
+
+        if ($cmp >= 0) {
+            return true;
         }
 
         return false;

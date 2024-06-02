@@ -52,6 +52,8 @@ CREATE TABLE `asset` (
   `begin_after` integer,
   `begin_year` integer,
   `begin_month` integer,
+  `ignore_until_year` integer,
+  `ignore_until_month` integer,
   `created_at` timestamp DEFAULT (now()),
   `modified_at` timestamp DEFAULT (now())
 );

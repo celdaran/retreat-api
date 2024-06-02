@@ -1,3 +1,6 @@
+// The online diagram is authoritative. This is a local, convenience copy and may be out of date
+// https://www.dbdiagram.io/d/retreat-6445306c6b319470510c0fb2
+
 // Use DBML to define your database structure
 // Docs: https://github.com/holistics/dbml/tree/master/dbml-homepage/docs
 
@@ -61,6 +64,8 @@ Table asset {
   begin_after integer
   begin_year integer
   begin_month integer
+  ignore_until_year integer
+  ignore_until_month integer
   created_at timestamp [default: `now()`]
   modified_at timestamp [default: `now()`]
   Indexes {

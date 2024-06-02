@@ -99,7 +99,7 @@ class Engine
                 'month' => $this->currentPeriod->getMonth(),
                 'expenses' => $this->expenseCollection->getAmounts(),
                 'earnings' => $this->earningsCollection->getAmounts(),
-                'assets' => $this->assetCollection->getBalances(),
+                'assets' => $this->assetCollection->getBalances($this->currentPeriod),
             ];
 
             $this->appendToAudit();
@@ -151,7 +151,7 @@ class Engine
 
         $this->summary['lastYear'] = $this->currentPeriod->getYear();
         $this->summary['lastMonth'] = $this->currentPeriod->getMonth();
-        $assetBalances = $this->assetCollection->getBalances(true);
+        $assetBalances = $this->assetCollection->getBalances($this->currentPeriod, true);
         foreach ($assetBalances as $k => $v) {
             $this->summary['asset:'.$k] = $v;
         }
@@ -268,7 +268,7 @@ class Engine
 
         if ($amount < 0) {
             // But if it's less, then we need to make a deposit
-            $this->assetCollection->stashSurplus($amount);
+            $this->assetCollection->stashSurplus($this->currentPeriod, $amount);
             return 0;
         }
 
@@ -296,7 +296,7 @@ class Engine
         $this->earningsCollection->applyInflation();
 
         // Assets gain value at the end of each period
-        $this->assetCollection->earnInterest();
+        $this->assetCollection->earnInterest($this->currentPeriod);
     }
 
 
