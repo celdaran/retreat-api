@@ -53,8 +53,10 @@ class AssetCollection extends Scenario
         foreach ($this->assets as $asset) {
             if ($asset->isIgnored($period)) {
                 $ignoredAsset = new Asset();
+                $ignoredAsset->setId($asset->id());
                 $ignoredAsset->setName($asset->name());
                 $ignoredAsset->setOpeningBalance(0);
+                $ignoredAsset->setCurrentBalance(0);
                 $ignoredAsset->setMaxWithdrawal(0);
                 $ignoredAsset->setApr(0);
                 $ignoredAsset->setIncomeType(0);
