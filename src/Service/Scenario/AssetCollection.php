@@ -55,7 +55,14 @@ class AssetCollection extends Scenario
                 $ignoredAsset = new Asset();
                 $ignoredAsset->setName($asset->name());
                 $ignoredAsset->setOpeningBalance(0);
-                $ignoredAsset->setCurrentBalance(0);
+                $ignoredAsset->setMaxWithdrawal(0);
+                $ignoredAsset->setApr(0);
+                $ignoredAsset->setIncomeType(0);
+                $ignoredAsset->setBeginAfter(null);
+                $ignoredAsset->setBeginYear(null);
+                $ignoredAsset->setBeginMonth(null);
+                $ignoredAsset->setIgnoreUntilYear($asset->ignoreUntilYear());
+                $ignoredAsset->setIgnoreUntilMonth($asset->ignoreUntilMonth());
                 $filteredAssets[] = $ignoredAsset;
             } else {
                 $filteredAssets[] = $asset;
