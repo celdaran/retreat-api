@@ -51,7 +51,13 @@ class AssetCollection extends Scenario
         $filteredAssets = [];
         /** @var Asset $asset */
         foreach ($this->assets as $asset) {
-            if (!$asset->isIgnored($period)) {
+            if ($asset->isIgnored($period)) {
+                $ignoredAsset = new Asset();
+                $ignoredAsset->setName($asset->name());
+                $ignoredAsset->setOpeningBalance(0);
+                $ignoredAsset->setCurrentBalance(0);
+                $filteredAssets[] = $ignoredAsset;
+            } else {
                 $filteredAssets[] = $asset;
             }
         }
