@@ -308,8 +308,8 @@ class Asset
 
     public function isIgnored(Period $period): bool
     {
-        // If ignore not set at all, then don't ignore
-        if (($this->ignoreUntilYear() === null) || ($this->ignoreUntilMonth() === null)) {
+        // If ignore settings are incomplete then we're not ignoring
+        if (empty($this->ignoreUntilYear()) || empty($this->ignoreUntilMonth())) {
             return false;
         }
 
